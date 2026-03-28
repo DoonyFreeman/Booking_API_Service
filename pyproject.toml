@@ -2,8 +2,10 @@
 name = "booking-api"
 version = "0.1.0"
 description = "REST API for cinema hall booking"
-readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.13"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
 dependencies = [
     "fastapi>=0.115.0",
     "uvicorn[standard]>=0.30.0",
@@ -32,7 +34,7 @@ dev = [
 ]
 
 [tool.ruff]
-target-version = "py312"
+target-version = "py313"
 line-length = 88
 indent-width = 4
 
@@ -51,7 +53,7 @@ ignore = [
 ]
 
 [tool.mypy]
-python_version = "3.12"
+python_version = "3.13"
 warn_return_any = true
 warn_unused_ignores = true
 disallow_untyped_defs = true
