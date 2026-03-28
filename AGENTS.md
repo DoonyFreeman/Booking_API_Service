@@ -4,9 +4,22 @@
 
 REST API для бронирования залов кинотеатра. Пользователи бронируют места в залах на определённое время.
 
-## Development Plan
+---
 
-См. `DEVELOPMENT_PLAN.md` для полного плана реализации.
+## Development Progress
+
+| Этап | Описание | Статус |
+|------|---------|--------|
+| 1 | Базовая структура проекта | ✅ Готово |
+| 2 | Модели данных (User, Hall, Seat, Booking) | ✅ Готово |
+| 3 | Pydantic Schemas | ✅ Готово |
+| 4 | Auth (JWT) | ☐ В работе |
+| 5 | CRUD ресурсов (users, halls, seats) | ☐ |
+| 6 | Бизнес-логика бронирования | ☐ |
+| 7 | Kafka + Worker (email) | ☐ |
+| 8 | Docker + CI/CD | ☐ |
+| 9 | Тесты | ☐ |
+| 10 | README + документация | ☐ |
 
 ---
 
@@ -26,10 +39,14 @@ REST API для бронирования залов кинотеатра. Пол
 
 ## Commands
 
-### Virtual Environment
+### Setup
 ```bash
+# Create venv and install
 python -m venv venv && source venv/bin/activate
-poetry install
+pip install -e .
+
+# Copy environment
+cp .env.example .env
 ```
 
 ### Development Server
@@ -53,19 +70,10 @@ alembic downgrade -1
 
 ### Testing
 ```bash
-# All tests
 pytest
-
-# With coverage
 pytest --cov=app --cov-report=html
-
-# Single test file
 pytest tests/test_auth.py -v
-
-# Single test function
 pytest tests/test_auth.py::test_register_success -v
-
-# Pattern match
 pytest -k "test_create_booking"
 ```
 
@@ -78,55 +86,99 @@ docker-compose logs -f api
 
 ---
 
-## Project Structure
+## Current Project Structure
 
 ```
-app/
-├── main.py                    # FastAPI app + lifespan
-├── config.py                  # Pydantic Settings
-├── db.py                      # async SQLAlchemy
-├── redis.py                   # Redis connection
-├── kafka.py                   # Kafka producer
-├── exceptions.py              # Custom exceptions
-├── models/
-│   ├── base.py                # DeclarativeBase
-│   ├── enums.py               # UserRole, BookingStatus
-│   ├── user.py
-│   ├── hall.py
-│   ├── seat.py
-│   └── booking.py
-├── schemas/
-│   ├── auth.py                # Login, Register
-│   ├── user.py
-│   ├── hall.py
-│   ├── seat.py
-│   └── booking.py
-├── routers/
-│   ├── auth.py                # /api/v1/auth/
-│   ├── users.py               # /api/v1/users/
-│   ├── halls.py              # /api/v1/halls/
-│   ├── seats.py              # /api/v1/halls/{id}/seats/
-│   └── bookings.py           # /api/v1/bookings/
-├── services/
-│   ├── auth_service.py
-│   ├── booking_service.py    # Core: conflicts, locks, price
-│   └── notification_service.py
-├── core/
-│   ├── security.py            # JWT, password hashing
-│   └── dependencies.py        # get_db, get_current_user
-└── utils/
-    └── datetime_utils.py
-tests/
-├── conftest.py
-├── test_auth.py
-├── test_halls.py
-└── test_bookings.py
-worker.py                      # Kafka consumer
+Booking_API_Service/
+├── app/
+│   ├── __init__.py
+│   ├── main.py                    # ✅ FastAPI app + lifespan
+│   ├── config.py                 # ✅ Pydantic Settings
+│   ├── db.py                     # ✅ async SQLAlchemy
+│   ├── redis.py                  # ✅ Redis + lock helpers
+│   ├── kafka.py                  # ✅ Kafka producer
+│   ├── exceptions.py             # ✅ Custom HTTP exceptions
+│   ├── models/
+│   │   ├── __init__.py           # ✅ Exports all models
+│   │   ├── base.py               # ✅ DeclarativeBase, TimestampMixin
+│   │   ├── enums.py              # ✅ UserRole, BookingStatus
+│   │   ├── user.py               # ✅ User model
+│   │   ├── hall.py               # ✅ Hall model
+│   │   ├── seat.py               # ✅ Seat model + UniqueConstraint
+│   │   ├── booking.py            # ✅ Booking model + indexes
+│   │   └── booking_seat.py       # ✅ BookingSeat (M2M)
+│   ├── schemas/
+│   │   ├── __init__.py           # ✅ Exports all schemas
+│   │   ├── auth.py               # ✅ RegisterRequest, LoginRequest, TokenResponse
+│   │   ├── user.py               # ✅ UserCreate, UserUpdate, UserResponse
+│   │   ├── hall.py               # ✅ HallCreate, HallUpdate, HallResponse (+ free_seats)
+│   │   ├── seat.py               # ✅ SeatCreate, SeatBulkCreate, SeatResponse
+│   │   ├── booking.py            # ✅ BookingCreate, BookingResponse, BookingSeatResponse
+│   │   └── common.py             # ✅ PaginationParams, PaginatedResponse<T>
+│   ├── routers/                   # ☐ To be implemented
+│   │   ├── __init__.py
+│   │   ├── auth.py               # /api/v1/auth/signup, /login
+│   │   ├── users.py              # /api/v1/users/me, /users/
+│   │   ├── halls.py              # /api/v1/halls/
+│   │   ├── seats.py              # /api/v1/halls/{id}/seats/
+│   │   └── bookings.py          # /api/v1/bookings/
+│   ├── services/                 # ☐ To be implemented
+│   │   ├── __init__.py
+│   │   ├── auth_service.py
+│   │   ├── booking_service.py
+│   │   └── notification_service.py
+│   ├── core/                     # ☐ To be implemented
+│   │   ├── __init__.py
+│   │   ├── security.py           # JWT, password hashing
+│   │   └── dependencies.py      # get_db, get_current_user
+│   └── utils/
+│       └── __init__.py
+├── tests/                        # ☐ To be implemented
+│   └── __init__.py
+├── alembic/
+│   ├── env.py                    # ✅ Async Alembic config
+│   ├── script.py.mako
+│   ├── versions/
+│   │   └── 001_initial_tables.py # ✅ Migration
+│   └── alembic.ini
+├── docker-compose.yml             # ✅ PostgreSQL + Redis
+├── pyproject.toml                # ✅ Dependencies
+├── .env.example                  # ✅ Environment template
+├── .gitignore
+├── README.md
+└── AGENTS.md
 ```
 
 ---
 
-## API Endpoints
+## Database Schema (PostgreSQL)
+
+### Tables
+
+**users** (✅ created)
+- id, email (unique), hashed_password, role, is_active, created_at, updated_at
+- Indexes: email (unique), role
+
+**halls** (✅ created)
+- id, name, capacity, hourly_rate, is_active, created_at, updated_at
+- Indexes: name, is_active
+
+**seats** (✅ created)
+- id, hall_id (FK), row, number, is_active
+- UniqueConstraint: (hall_id, row, number)
+- Indexes: hall_id, is_active
+
+**bookings** (✅ created)
+- id, user_id (FK), hall_id (FK), start_time, end_time, total_price, status, created_at, updated_at
+- Indexes: user_id, hall_id, start_time, end_time, status, (hall_id, start_time, end_time)
+
+**booking_seats** (✅ created)
+- id, booking_id (FK), seat_id (FK)
+- Indexes: booking_id, seat_id
+
+---
+
+## API Endpoints (to be implemented)
 
 ### Auth
 ```
@@ -137,23 +189,24 @@ POST /api/v1/auth/login     # Login → JWT token
 ### Users
 ```
 GET  /api/v1/users/me       # Current user profile
-GET  /api/v1/users/         # List users (admin)
+GET  /api/v1/users/          # List users (admin)
 PATCH /api/v1/users/{id}     # Update user (admin)
 ```
 
 ### Halls
 ```
-GET   /api/v1/halls/        # List active halls
-GET   /api/v1/halls/{id}    # Hall details
+GET   /api/v1/halls/         # List active halls
+GET   /api/v1/halls/{id}    # Hall details (+ total_seats, free_seats)
 POST  /api/v1/halls/        # Create hall (admin)
 PATCH /api/v1/halls/{id}    # Update hall (admin)
+DELETE /api/v1/halls/{id}   # Soft delete hall (admin)
 ```
 
 ### Seats
 ```
-GET   /api/v1/halls/{hall_id}/seats/   # List seats in hall
-POST  /api/v1/halls/{hall_id}/seats/   # Create seat (admin)
-POST  /api/v1/halls/{hall_id}/seats/bulk   # Bulk create (admin)
+GET   /api/v1/halls/{hall_id}/seats/       # List seats in hall
+POST  /api/v1/halls/{hall_id}/seats/       # Create seat (admin)
+POST  /api/v1/halls/{hall_id}/seats/bulk    # Bulk create seats (admin)
 DELETE /api/v1/halls/{hall_id}/seats/{id}  # Delete seat (admin)
 ```
 
@@ -213,14 +266,17 @@ raise HTTPException(
 
 ### Custom Exceptions (app/exceptions.py)
 ```python
-class BookingConflictError(Exception):
-    pass
+class BookingConflictError(HTTPException):
+    def __init__(self, detail: str = "Booking conflict"):
+        super().__init__(status_code=409, detail=detail)
 
-class SeatNotFoundError(Exception):
-    pass
+class HallNotFoundError(HTTPException):
+    def __init__(self, detail: str = "Hall not found"):
+        super().__init__(status_code=404, detail=detail)
 
-class HallNotFoundError(Exception):
-    pass
+class SeatNotFoundError(HTTPException):
+    def __init__(self, detail: str = "Seat not found"):
+        super().__init__(status_code=404, detail=detail)
 ```
 
 ### Async Error Handling
@@ -236,75 +292,19 @@ except Exception as e:
 
 ---
 
-## Pydantic Schemas (examples)
-
-```python
-from pydantic import BaseModel, EmailStr, Field, ConfigDict
-from decimal import Decimal
-from datetime import datetime
-from typing import List
-
-class BookingCreate(BaseModel):
-    hall_id: int
-    seat_ids: List[int] = Field(..., min_length=1)
-    start_time: datetime
-    end_time: datetime
-
-class BookingResponse(BaseModel):
-    id: int
-    hall_id: int
-    hall_name: str
-    seats: List[SeatResponse]
-    start_time: datetime
-    end_time: datetime
-    total_price: Decimal
-    status: str
-    created_at: datetime
-    model_config = ConfigDict(from_attributes=True)
-```
-
----
-
-## SQLAlchemy Models (examples)
-
-```python
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey, UniqueConstraint
-from sqlalchemy.orm import DeclarativeBase, relationship
-from sqlalchemy.sql import func
-
-class Base(DeclarativeBase):
-    pass
-
-class Seat(Base):
-    __tablename__ = "seats"
-    __table_args__ = (
-        UniqueConstraint('hall_id', 'row', 'number', name='uq_seat_position'),
-    )
-
-    id = Column(Integer, primary_key=True, index=True)
-    hall_id = Column(Integer, ForeignKey("halls.id"), nullable=False)
-    row = Column(Integer, nullable=False)
-    number = Column(Integer, nullable=False)
-    is_active = Column(Boolean, default=True)
-```
-
----
-
 ## Redis Locks Pattern
 
 ```python
-import redis.asyncio as redis
-
 LOCK_PREFIX = "lock:booking:"
 LOCK_TIMEOUT = 10
 
-async def acquire_lock(redis_client: redis.Redis, hall_id: int, date: str) -> bool:
-    key = f"{LOCK_PREFIX}{hall_id}:{date}"
-    return await redis_client.set(key, "1", nx=True, ex=LOCK_TIMEOUT)
+async def acquire_lock(client: redis.Redis, hall_id: int, date_str: str) -> bool:
+    key = f"{LOCK_PREFIX}{hall_id}:{date_str}"
+    return await client.set(key, "1", nx=True, ex=LOCK_TIMEOUT)
 
-async def release_lock(redis_client: redis.Redis, hall_id: int, date: str) -> None:
-    key = f"{LOCK_PREFIX}{hall_id}:{date}"
-    await redis_client.delete(key)
+async def release_lock(client: redis.Redis, hall_id: int, date_str: str) -> None:
+    key = f"{LOCK_PREFIX}{hall_id}:{date_str}"
+    await client.delete(key)
 
 async def create_booking(...):
     date_str = start_time.date().isoformat()
@@ -321,12 +321,12 @@ async def create_booking(...):
 ## Kafka Events
 
 ```python
-# Producer (services/booking_service.py)
-async def publish_booking_event(kafka_producer, event_type: str, data: dict):
+# Producer (app/kafka.py)
+async def send_booking_event(event_type: str, data: dict) -> None:
     event = {"type": event_type, **data}
-    await kafka_producer.send("booking-events", value=event)
+    await producer.send_and_wait(settings.KAFKA_TOPIC_BOOKING_EVENTS, value=event)
 
-# Events
+# Event: BookingCreated
 {
     "type": "booking_created",
     "booking_id": 123,
@@ -338,6 +338,7 @@ async def publish_booking_event(kafka_producer, event_type: str, data: dict):
     "total_price": "200.00"
 }
 
+# Event: BookingCancelled
 {
     "type": "booking_cancelled",
     "booking_id": 123,
@@ -351,9 +352,7 @@ async def publish_booking_event(kafka_producer, event_type: str, data: dict):
 ## Database Sessions
 
 ```python
-async def get_db() -> AsyncGenerator[AsyncSession, None]:
-    async with async_session_maker() as session:
-        yield session
+from app.db import get_db
 
 @router.post("/bookings/", response_model=BookingResponse)
 async def create_booking(
@@ -439,14 +438,54 @@ async def test_create_booking(client: AsyncClient, auth_headers: dict):
 ## Environment Variables
 
 ```bash
+# Application
+APP_NAME=Booking API
+DEBUG=false
+
+# Database
 DATABASE_URL=postgresql+asyncpg://user:pass@localhost:5432/booking_db
-REDIS_URL=redis://localhost:6379
+
+# Redis
+REDIS_URL=redis://localhost:6379/0
+
+# Kafka
 KAFKA_BOOTSTRAP_SERVERS=localhost:9092
-SMTP_HOST=smtp.example.com
-SMTP_PORT=587
-SMTP_USER=user@example.com
-SMTP_PASSWORD=secret
-JWT_SECRET_KEY=your-secret-key
+KAFKA_TOPIC_BOOKING_EVENTS=booking-events
+
+# JWT
+JWT_SECRET_KEY=your-super-secret-key-change-in-production
 JWT_ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=30
+
+# SMTP
+SMTP_HOST=smtp.example.com
+SMTP_PORT=587
+SMTP_USER=
+SMTP_PASSWORD=
+SMTP_FROM_EMAIL=noreply@booking.api
+
+# Booking Limits
+MIN_BOOKING_HOURS=1
+MAX_BOOKING_HOURS=8
+SESSION_START_HOUR=9
+SESSION_END_HOUR=23
 ```
+
+---
+
+## Next Steps
+
+1. **Этап 4: Auth (JWT)**
+   - `app/core/security.py` — hash_password, verify_password, create_token, decode_token
+   - `app/core/dependencies.py` — get_current_user, get_current_admin
+   - `app/services/auth_service.py` — register, authenticate
+   - `app/routers/auth.py` — /auth/signup, /auth/login
+
+2. **Этап 5: CRUD ресурсов**
+   - `app/routers/users.py`
+   - `app/routers/halls.py`
+   - `app/routers/seats.py`
+
+3. **Этап 6: Бизнес-логика бронирования**
+   - `app/services/booking_service.py`
+   - `app/routers/bookings.py`
