@@ -13,7 +13,7 @@ REST API для бронирования залов кинотеатра. Пол
 | 1 | Базовая структура проекта | ✅ Готово |
 | 2 | Модели данных (User, Hall, Seat, Booking) | ✅ Готово |
 | 3 | Pydantic Schemas | ✅ Готово |
-| 4 | Auth (JWT) | ☐ В работе |
+| 4 | Auth (JWT) | ✅ Готово |
 | 5 | CRUD ресурсов (users, halls, seats) | ☐ |
 | 6 | Бизнес-логика бронирования | ☐ |
 | 7 | Kafka + Worker (email) | ☐ |
@@ -115,22 +115,25 @@ Booking_API_Service/
 │   │   ├── seat.py               # ✅ SeatCreate, SeatBulkCreate, SeatResponse
 │   │   ├── booking.py            # ✅ BookingCreate, BookingResponse, BookingSeatResponse
 │   │   └── common.py             # ✅ PaginationParams, PaginatedResponse<T>
-│   ├── routers/                   # ☐ To be implemented
-│   │   ├── __init__.py
-│   │   ├── auth.py               # /api/v1/auth/signup, /login
+│   ├── routers/                   # ✅ Auth router
+│   │   ├── __init__.py           # ✅ Exports routers
+│   │   ├── auth.py               # ✅ /api/v1/auth/signup, /login
 │   │   ├── users.py              # /api/v1/users/me, /users/
 │   │   ├── halls.py              # /api/v1/halls/
 │   │   ├── seats.py              # /api/v1/halls/{id}/seats/
 │   │   └── bookings.py          # /api/v1/bookings/
-│   ├── services/                 # ☐ To be implemented
-│   │   ├── __init__.py
-│   │   ├── auth_service.py
+│   ├── services/                 # ✅ Auth service
+│   │   ├── __init__.py           # ✅ Exports services
+│   │   ├── auth_service.py       # ✅ register, authenticate, create_token
 │   │   ├── booking_service.py
 │   │   └── notification_service.py
-│   ├── core/                     # ☐ To be implemented
-│   │   ├── __init__.py
-│   │   ├── security.py           # JWT, password hashing
-│   │   └── dependencies.py      # get_db, get_current_user
+│   ├── core/                     # ✅ Security
+│   │   ├── __init__.py           # ✅ Exports security
+│   │   ├── security.py           # ✅ hash, verify, JWT
+│   │   └── dependencies.py      # ✅ get_current_user, get_current_admin
+│   └── scripts/
+│       ├── __init__.py
+│       └── create_admin.py       # ✅ CLI for creating admin users
 │   └── utils/
 │       └── __init__.py
 ├── tests/                        # ☐ To be implemented

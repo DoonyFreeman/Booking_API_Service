@@ -9,6 +9,7 @@ from app.config import settings
 from app.db import create_tables
 from app.kafka import close_kafka, init_kafka
 from app.redis import close_redis, init_redis
+from app.routers import auth
 
 logging.basicConfig(
     level=logging.DEBUG if settings.DEBUG else logging.INFO,
@@ -47,6 +48,8 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    app.include_router(auth.router, prefix="/api/v1")
 
     return app
 
