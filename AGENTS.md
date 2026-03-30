@@ -14,9 +14,9 @@ REST API для бронирования залов кинотеатра. Пол
 | 2 | Модели данных (User, Hall, Seat, Booking) | ✅ Готово |
 | 3 | Pydantic Schemas | ✅ Готово |
 | 4 | Auth (JWT) | ✅ Готово |
-| 5 | CRUD ресурсов (users, halls, seats) | ☐ |
-| 6 | Бизнес-логика бронирования | ☐ |
-| 7 | Kafka + Worker (email) | ☐ |
+| 5 | CRUD ресурсов (users, halls, seats) | ✅ Готово |
+| 6 | Бизнес-логика бронирования | ✅ Готово |
+| 7 | Kafka + Worker (email) | ☐ В работе |
 | 8 | Docker + CI/CD | ☐ |
 | 9 | Тесты | ☐ |
 | 10 | README + документация | ☐ |
