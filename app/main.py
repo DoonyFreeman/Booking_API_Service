@@ -9,7 +9,7 @@ from app.config import settings
 from app.db import create_tables
 from app.kafka import close_kafka, init_kafka
 from app.redis import close_redis, init_redis
-from app.routers import auth, halls, seats, users
+from app.routers import auth, bookings, halls, seats, users
 
 logging.basicConfig(
     level=logging.DEBUG if settings.DEBUG else logging.INFO,
@@ -53,6 +53,7 @@ def create_app() -> FastAPI:
     app.include_router(users.router, prefix="/api/v1")
     app.include_router(halls.router, prefix="/api/v1")
     app.include_router(seats.router, prefix="/api/v1")
+    app.include_router(bookings.router, prefix="/api/v1")
 
     return app
 

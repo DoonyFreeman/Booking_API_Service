@@ -40,3 +40,11 @@ class BookingResponse(BaseModel):
 class BookingListResponse(BaseModel):
     bookings: List[BookingResponse]
     total: int
+
+
+class TimeSlotResponse(BaseModel):
+    hour: int
+    available: bool
+    total_seats: int
+    free_seats: int
+    booked_seats: int
