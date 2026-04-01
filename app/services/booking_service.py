@@ -134,6 +134,11 @@ async def create_booking(
     if not hall:
         raise HallNotFoundError("Hall not found or inactive")
 
+    user_result = await db.execute(select(User).where(User.id == user_id))
+    user = user_result.scalar_one_or_none()
+    if not user:
+        raise ValueError("User not found")
+
     await validate_time_slot(start_time, end_time)
     await validate_seats_exist(db, hall_id, seat_ids)
     await check_seat_conflicts(db, hall_id, seat_ids, start_time, end_time)
@@ -176,6 +181,7 @@ async def create_booking(
             {
                 "booking_id": booking.id,
                 "user_id": user_id,
+                "user_email": user.email,
                 "hall_name": hall.name,
                 "start_time": start_time.isoformat(),
                 "end_time": end_time.isoformat(),
@@ -194,7 +200,11 @@ async def cancel_booking(
     booking_id: int,
     user_id: int,
 ) -> Booking:
-    result = await db.execute(select(Booking).where(Booking.id == booking_id))
+    result = await db.execute(
+        select(Booking)
+        .options(selectinload(Booking.user))
+        .where(Booking.id == booking_id)
+    )
     booking = result.scalar_one_or_none()
 
     if not booking:
@@ -206,6 +216,8 @@ async def cancel_booking(
     if booking.status == BookingStatus.cancelled:
         raise BookingConflictError("Booking already cancelled")
 
+    user_email = booking.user.email if booking.user else ""
+
     booking.status = BookingStatus.cancelled
     await db.flush()
     await db.refresh(booking)
@@ -215,6 +227,7 @@ async def cancel_booking(
         {
             "booking_id": booking.id,
             "user_id": user_id,
+            "user_email": user_email,
             "hall_name": booking.hall.name if booking.hall else "Unknown",
         },
     )
