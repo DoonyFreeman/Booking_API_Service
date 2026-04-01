@@ -107,7 +107,11 @@ async def get_booking(
     )
 
 
-@router.post("/", response_model=BookingResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/",
+    response_model=BookingResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 async def create_booking(
     data: BookingCreate,
     current_user: CurrentUser,
@@ -165,7 +169,10 @@ async def cancel_booking(
     )
 
 
-@router.get("/halls/{hall_id}/availability", response_model=list[TimeSlotResponse])
+@router.get(
+    "/halls/{hall_id}/availability",
+    response_model=list[TimeSlotResponse],
+)
 async def get_availability(
     hall_id: int,
     date: date,

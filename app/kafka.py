@@ -1,21 +1,45 @@
 import json
+import asyncio
+import logging
 from typing import Any
 
 from aiokafka import AIOKafkaProducer
+from aiokafka.errors import KafkaConnectionError
 
 from app.config import settings
 
+logger = logging.getLogger(__name__)
+
 kafka_producer: AIOKafkaProducer | None = None
+
+MAX_RETRIES = 10
+RETRY_DELAY = 2
 
 
 async def init_kafka() -> AIOKafkaProducer:
     global kafka_producer
-    kafka_producer = AIOKafkaProducer(
-        bootstrap_servers=settings.KAFKA_BOOTSTRAP_SERVERS,
-        value_serializer=lambda v: json.dumps(v, default=str).encode("utf-8"),
+
+    for attempt in range(MAX_RETRIES):
+        try:
+            kafka_producer = AIOKafkaProducer(
+                bootstrap_servers=settings.KAFKA_BOOTSTRAP_SERVERS,
+                value_serializer=lambda v: json.dumps(v, default=str).encode("utf-8"),
+            )
+            await kafka_producer.start()
+            logger.info("Kafka connected successfully")
+            return kafka_producer
+        except KafkaConnectionError as e:
+            logger.warning(
+                f"Kafka not ready (attempt {attempt + 1}/{MAX_RETRIES}): {e}"
+            )
+            if kafka_producer:
+                await kafka_producer.stop()
+                kafka_producer = None
+            await asyncio.sleep(RETRY_DELAY)
+
+    raise KafkaConnectionError(
+        f"Failed to connect to Kafka after {MAX_RETRIES} attempts"
     )
-    await kafka_producer.start()
-    return kafka_producer
 
 
 async def close_kafka() -> None:

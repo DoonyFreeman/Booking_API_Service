@@ -8,11 +8,31 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy dependency files
+# Copy pyproject.toml first for better caching
 COPY pyproject.toml .
 
-# Install Python dependencies
-RUN pip install --no-cache-dir -e .
+# Install all dependencies explicitly
+RUN pip install --no-cache-dir \
+    "fastapi>=0.115.0" \
+    "uvicorn[standard]" \
+    "sqlalchemy[asyncio]" \
+    asyncpg \
+    aiosqlite \
+    alembic \
+    pydantic \
+    pydantic-settings \
+    "redis[hiredis]" \
+    aiokafka \
+    "python-jose[cryptography]" \
+    passlib \
+    "bcrypt==4.0.1" \
+    aiosmtplib \
+    email-validator \
+    httpx \
+    pytest \
+    pytest-asyncio \
+    pytest-cov \
+    greenlet
 
 # Copy application code
 COPY app/ app/

@@ -34,7 +34,11 @@ async def list_seats(
     return [SeatResponse.model_validate(s) for s in seats]
 
 
-@router.post("/", response_model=SeatResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/",
+    response_model=SeatResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 async def create_seat(
     hall_id: int,
     data: SeatCreate,
@@ -68,7 +72,9 @@ async def create_seat(
 
 
 @router.post(
-    "/bulk", response_model=List[SeatResponse], status_code=status.HTTP_201_CREATED
+    "/bulk",
+    response_model=List[SeatResponse],
+    status_code=status.HTTP_201_CREATED,
 )
 async def bulk_create_seats(
     hall_id: int,

@@ -77,6 +77,22 @@ pytest tests/test_auth.py::test_register_success -v
 pytest -k "test_create_booking"
 ```
 
+### Swagger UI Authorize Button (Workaround)
+Кнопка Authorize может не отображаться в Swagger UI 5 при использовании только глобального security. В этом случае используйте curl:
+
+```bash
+# 1. Login → получить токен
+TOKEN=$(curl -s -X POST http://localhost:8000/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@test.com","password":"secret123"}' | grep -o '"access_token":"[^"]*"' | cut -d'"' -f4)
+
+# 2. Использовать токен
+curl -X POST http://localhost:8000/api/v1/halls/ \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Зал 1","capacity":50,"hourly_rate":100}'
+```
+
 ### Docker
 ```bash
 docker-compose up --build

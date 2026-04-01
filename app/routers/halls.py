@@ -58,7 +58,11 @@ async def get_hall(
     return response
 
 
-@router.post("/", response_model=HallResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/",
+    response_model=HallResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 async def create_hall(
     data: HallCreate,
     db: Annotated[AsyncSession, Depends(get_db)],

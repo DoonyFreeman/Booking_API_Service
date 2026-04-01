@@ -13,10 +13,7 @@ if TYPE_CHECKING:
 
 class User(Base, TimestampMixin):
     __tablename__ = "users"
-    __table_args__ = (
-        Index("ix_users_email", "email", unique=True),
-        Index("ix_users_role", "role"),
-    )
+    __table_args__ = (Index("ix_users_role", "role"),)
 
     id: Mapped[int] = mapped_column(primary_key=True)
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True)

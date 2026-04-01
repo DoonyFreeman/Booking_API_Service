@@ -57,7 +57,7 @@ services:
   worker:
     build: .
     container_name: booking_worker
-    command: python worker.py
+    command: python app/worker.py
     environment:
       - DATABASE_URL=postgresql+asyncpg://user:pass@postgres:5432/booking_db
       - REDIS_URL=redis://redis:6379/0

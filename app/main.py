@@ -4,6 +4,7 @@ from typing import AsyncGenerator
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.openapi.utils import get_openapi
 
 from app.config import settings
 from app.db import create_tables
@@ -27,6 +28,23 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     logger.info("Kafka producer initialized")
     await create_tables()
     logger.info("Database tables ready")
+
+    openapi_schema = get_openapi(
+        title=app.title,
+        version=app.version,
+        routes=app.routes,
+    )
+    openapi_schema["components"]["securitySchemes"] = {
+        "Bearer": {
+            "type": "http",
+            "scheme": "bearer",
+            "description": "JWT token",
+        }
+    }
+    openapi_schema["security"] = [{"Bearer": []}]
+    app.openapi_schema = openapi_schema
+    logger.info("OpenAPI security schemes configured")
+
     yield
     logger.info("Shutting down...")
     await close_kafka()

@@ -43,7 +43,6 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("email"),
     )
-    op.create_index("ix_users_email", "users", ["email"], unique=True)
     op.create_index("ix_users_role", "users", ["role"])
 
     # halls table
