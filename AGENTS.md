@@ -18,8 +18,8 @@ REST API для бронирования залов кинотеатра. Пол
 | 6 | Бизнес-логика бронирования | ✅ Готово |
 | 7 | Kafka + Worker (email) | ✅ Готово |
 | 8 | Docker + CI/CD | ✅ Готово |
-| 9 | Тесты | ☐ |
-| 10 | README + документация | ☐ |
+| 9 | Тесты | ✅ Готово |
+| 10 | README + документация | ✅ Готово |
 
 ---
 
@@ -37,9 +37,36 @@ REST API для бронирования залов кинотеатра. Пол
 
 ---
 
+## Quick Start
+
+### 1. Start all services with Docker
+
+```bash
+docker-compose up --build
+```
+
+API will be available at: http://localhost:8000/docs
+
+### 2. Create admin user
+
+```bash
+docker exec booking_api python -m app.scripts.create_admin --email admin@test.com --password secret123
+```
+
+### 3. Use Swagger UI
+
+1. Open: http://localhost:8000/docs
+2. Login: POST /api/v1/auth/login
+3. Copy `access_token` from response
+4. Click **"Authorize"** button (🔓)
+5. Paste token **WITHOUT** `Bearer ` prefix
+6. Click **"Authorize"** → **"Close"**
+
+---
+
 ## Commands
 
-### Setup
+### Setup (Local Development)
 ```bash
 # Create venv and install
 python -m venv venv && source venv/bin/activate
@@ -77,27 +104,30 @@ pytest tests/test_auth.py::test_register_success -v
 pytest -k "test_create_booking"
 ```
 
-### Swagger UI Authorize Button (Workaround)
-Кнопка Authorize может не отображаться в Swagger UI 5 при использовании только глобального security. В этом случае используйте curl:
-
-```bash
-# 1. Login → получить токен
-TOKEN=$(curl -s -X POST http://localhost:8000/api/v1/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"admin@test.com","password":"secret123"}' | grep -o '"access_token":"[^"]*"' | cut -d'"' -f4)
-
-# 2. Использовать токен
-curl -X POST http://localhost:8000/api/v1/halls/ \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"name":"Зал 1","capacity":50,"hourly_rate":100}'
-```
-
 ### Docker
 ```bash
+# Start all services
 docker-compose up --build
-docker-compose down
+
+# Start specific service
+docker-compose up -d api
+
+# View logs
 docker-compose logs -f api
+docker-compose logs -f worker
+
+# Stop
+docker-compose down
+
+# Rebuild after code changes
+docker-compose up -d --build api
+docker-compose up -d --build worker
+```
+
+### Kafka Messages (View events)
+```bash
+docker exec booking_kafka /opt/kafka/bin/kafka-console-consumer.sh \
+  --topic booking-events --from-beginning --bootstrap-server localhost:9092
 ```
 
 ---
@@ -108,63 +138,59 @@ docker-compose logs -f api
 Booking_API_Service/
 ├── app/
 │   ├── __init__.py
-│   ├── main.py                    # ✅ FastAPI app + lifespan
-│   ├── config.py                 # ✅ Pydantic Settings
-│   ├── db.py                     # ✅ async SQLAlchemy
-│   ├── redis.py                  # ✅ Redis + lock helpers
-│   ├── kafka.py                  # ✅ Kafka producer
-│   ├── exceptions.py             # ✅ Custom HTTP exceptions
+│   ├── main.py                    # FastAPI app + lifespan
+│   ├── config.py                 # Pydantic Settings
+│   ├── db.py                     # async SQLAlchemy
+│   ├── redis.py                  # Redis + lock helpers
+│   ├── kafka.py                  # Kafka producer
+│   ├── worker.py                 # Kafka consumer worker
+│   ├── exceptions.py             # Custom HTTP exceptions
 │   ├── models/
-│   │   ├── __init__.py           # ✅ Exports all models
-│   │   ├── base.py               # ✅ DeclarativeBase, TimestampMixin
-│   │   ├── enums.py              # ✅ UserRole, BookingStatus
-│   │   ├── user.py               # ✅ User model
-│   │   ├── hall.py               # ✅ Hall model
-│   │   ├── seat.py               # ✅ Seat model + UniqueConstraint
-│   │   ├── booking.py            # ✅ Booking model + indexes
-│   │   └── booking_seat.py       # ✅ BookingSeat (M2M)
+│   │   ├── __init__.py          # Exports all models
+│   │   ├── base.py              # DeclarativeBase, TimestampMixin
+│   │   ├── enums.py             # UserRole, BookingStatus
+│   │   ├── user.py              # User model
+│   │   ├── hall.py              # Hall model
+│   │   ├── seat.py              # Seat model
+│   │   ├── booking.py           # Booking model
+│   │   └── booking_seat.py      # BookingSeat (M2M)
 │   ├── schemas/
-│   │   ├── __init__.py           # ✅ Exports all schemas
-│   │   ├── auth.py               # ✅ RegisterRequest, LoginRequest, TokenResponse
-│   │   ├── user.py               # ✅ UserCreate, UserUpdate, UserResponse
-│   │   ├── hall.py               # ✅ HallCreate, HallUpdate, HallResponse (+ free_seats)
-│   │   ├── seat.py               # ✅ SeatCreate, SeatBulkCreate, SeatResponse
-│   │   ├── booking.py            # ✅ BookingCreate, BookingResponse, BookingSeatResponse
-│   │   └── common.py             # ✅ PaginationParams, PaginatedResponse<T>
-│   ├── routers/                   # ✅ Auth router
-│   │   ├── __init__.py           # ✅ Exports routers
-│   │   ├── auth.py               # ✅ /api/v1/auth/signup, /login
-│   │   ├── users.py              # /api/v1/users/me, /users/
-│   │   ├── halls.py              # /api/v1/halls/
-│   │   ├── seats.py              # /api/v1/halls/{id}/seats/
+│   │   ├── __init__.py          # Exports all schemas
+│   │   ├── auth.py              # RegisterRequest, LoginRequest, TokenResponse
+│   │   ├── user.py              # UserCreate, UserUpdate, UserResponse
+│   │   ├── hall.py              # HallCreate, HallUpdate, HallResponse
+│   │   ├── seat.py              # SeatCreate, SeatBulkCreate, SeatResponse
+│   │   ├── booking.py           # BookingCreate, BookingResponse
+│   │   └── common.py            # PaginationParams, PaginatedResponse<T>
+│   ├── routers/
+│   │   ├── __init__.py          # Exports routers
+│   │   ├── auth.py              # /api/v1/auth/signup, /login
+│   │   ├── users.py             # /api/v1/users/me, /users/
+│   │   ├── halls.py             # /api/v1/halls/
+│   │   ├── seats.py             # /api/v1/halls/{id}/seats/
 │   │   └── bookings.py          # /api/v1/bookings/
-│   ├── services/                 # ✅ Auth service
-│   │   ├── __init__.py           # ✅ Exports services
-│   │   ├── auth_service.py       # ✅ register, authenticate, create_token
-│   │   ├── booking_service.py
-│   │   └── notification_service.py
-│   ├── core/                     # ✅ Security
-│   │   ├── __init__.py           # ✅ Exports security
-│   │   ├── security.py           # ✅ hash, verify, JWT
-│   │   └── dependencies.py      # ✅ get_current_user, get_current_admin
+│   ├── services/
+│   │   ├── __init__.py         # Exports services
+│   │   ├── auth_service.py      # register, authenticate, create_token
+│   │   ├── booking_service.py   # Booking CRUD + validation
+│   │   └── notification_service.py # Email sending
+│   ├── core/
+│   │   ├── __init__.py          # Exports security
+│   │   ├── security.py          # hash, verify, JWT
+│   │   └── dependencies.py       # get_current_user, get_current_admin
 │   └── scripts/
-│       ├── __init__.py
-│       └── create_admin.py       # ✅ CLI for creating admin users
-│   └── utils/
-│       └── __init__.py
-├── tests/                        # ☐ To be implemented
-│   └── __init__.py
+│       └── create_admin.py       # CLI for creating admin users
+├── tests/                       # To be implemented
 ├── alembic/
-│   ├── env.py                    # ✅ Async Alembic config
+│   ├── env.py                   # Async Alembic config
 │   ├── script.py.mako
-│   ├── versions/
-│   │   └── 001_initial_tables.py # ✅ Migration
-│   └── alembic.ini
-├── docker-compose.yml             # ✅ PostgreSQL + Redis
-├── pyproject.toml                # ✅ Dependencies
-├── .env.example                  # ✅ Environment template
+│   └── versions/
+│       └── 001_initial_tables.py
+├── docker-compose.yml            # PostgreSQL + Redis + Kafka + API + Worker
+├── Dockerfile                    # API container
+├── pyproject.toml
+├── .env.example
 ├── .gitignore
-├── README.md
 └── AGENTS.md
 ```
 
@@ -174,68 +200,68 @@ Booking_API_Service/
 
 ### Tables
 
-**users** (✅ created)
+**users**
 - id, email (unique), hashed_password, role, is_active, created_at, updated_at
 - Indexes: email (unique), role
 
-**halls** (✅ created)
+**halls**
 - id, name, capacity, hourly_rate, is_active, created_at, updated_at
 - Indexes: name, is_active
 
-**seats** (✅ created)
+**seats**
 - id, hall_id (FK), row, number, is_active
 - UniqueConstraint: (hall_id, row, number)
 - Indexes: hall_id, is_active
 
-**bookings** (✅ created)
+**bookings**
 - id, user_id (FK), hall_id (FK), start_time, end_time, total_price, status, created_at, updated_at
 - Indexes: user_id, hall_id, start_time, end_time, status, (hall_id, start_time, end_time)
 
-**booking_seats** (✅ created)
+**booking_seats**
 - id, booking_id (FK), seat_id (FK)
 - Indexes: booking_id, seat_id
 
 ---
 
-## API Endpoints (to be implemented)
+## API Endpoints
 
 ### Auth
 ```
 POST /api/v1/auth/signup    # Register (email, password)
-POST /api/v1/auth/login     # Login → JWT token
+POST /api/v1/auth/login    # Login → JWT token
 ```
 
 ### Users
 ```
 GET  /api/v1/users/me       # Current user profile
-GET  /api/v1/users/          # List users (admin)
-PATCH /api/v1/users/{id}     # Update user (admin)
+GET  /api/v1/users/         # List users (admin)
+PATCH /api/v1/users/{id}    # Update user (admin)
 ```
 
 ### Halls
 ```
-GET   /api/v1/halls/         # List active halls
-GET   /api/v1/halls/{id}    # Hall details (+ total_seats, free_seats)
-POST  /api/v1/halls/        # Create hall (admin)
-PATCH /api/v1/halls/{id}    # Update hall (admin)
-DELETE /api/v1/halls/{id}   # Soft delete hall (admin)
+GET   /api/v1/halls/           # List active halls
+GET   /api/v1/halls/{id}       # Hall details (+ total_seats, free_seats)
+POST  /api/v1/halls/           # Create hall (admin)
+PATCH /api/v1/halls/{id}       # Update hall (admin)
+DELETE /api/v1/halls/{id}      # Soft delete hall (admin)
 ```
 
 ### Seats
 ```
-GET   /api/v1/halls/{hall_id}/seats/       # List seats in hall
-POST  /api/v1/halls/{hall_id}/seats/       # Create seat (admin)
-POST  /api/v1/halls/{hall_id}/seats/bulk    # Bulk create seats (admin)
+GET   /api/v1/halls/{hall_id}/seats/      # List seats in hall
+POST  /api/v1/halls/{hall_id}/seats/      # Create seat (admin)
+POST  /api/v1/halls/{hall_id}/seats/bulk   # Bulk create seats (admin)
 DELETE /api/v1/halls/{hall_id}/seats/{id}  # Delete seat (admin)
 ```
 
 ### Bookings
 ```
-GET  /api/v1/bookings/                              # User's bookings
-GET  /api/v1/bookings/{id}                          # Booking details
-POST /api/v1/bookings/                              # Create booking
-DELETE /api/v1/bookings/{id}                        # Cancel booking
-GET  /api/v1/bookings/halls/{id}/availability       # Available slots
+GET  /api/v1/bookings/                           # User's bookings
+GET  /api/v1/bookings/{id}                       # Booking details
+POST /api/v1/bookings/                           # Create booking
+DELETE /api/v1/bookings/{id}                     # Cancel booking
+GET  /api/v1/bookings/halls/{id}/availability    # Available slots
 ```
 
 ---
@@ -253,6 +279,7 @@ from decimal import Decimal
 from typing import Optional
 
 from fastapi import Depends, HTTPException, status
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.booking import Booking
@@ -314,57 +341,63 @@ except Exception as e:
 ## Redis Locks Pattern
 
 ```python
-LOCK_PREFIX = "lock:booking:"
 LOCK_TIMEOUT = 10
-
-async def acquire_lock(client: redis.Redis, hall_id: int, date_str: str) -> bool:
-    key = f"{LOCK_PREFIX}{hall_id}:{date_str}"
-    return await client.set(key, "1", nx=True, ex=LOCK_TIMEOUT)
-
-async def release_lock(client: redis.Redis, hall_id: int, date_str: str) -> None:
-    key = f"{LOCK_PREFIX}{hall_id}:{date_str}"
-    await client.delete(key)
 
 async def create_booking(...):
     date_str = start_time.date().isoformat()
-    if not await acquire_lock(redis_client, hall_id, date_str):
-        raise BookingConflictError("Another booking in progress")
+    hour = start_time.hour
+    lock_key = f"lock:hall:{hall_id}:{date_str}:{hour}"
+    
+    if not await redis_client.set(lock_key, "1", nx=True, ex=LOCK_TIMEOUT):
+        raise BookingConflictError("Another booking in progress for this time slot")
+    
     try:
         # ... business logic ...
     finally:
-        await release_lock(redis_client, hall_id, date_str)
+        await redis_client.delete(lock_key)
 ```
 
 ---
 
 ## Kafka Events
 
+### Producer (app/kafka.py)
 ```python
-# Producer (app/kafka.py)
 async def send_booking_event(event_type: str, data: dict) -> None:
     event = {"type": event_type, **data}
     await producer.send_and_wait(settings.KAFKA_TOPIC_BOOKING_EVENTS, value=event)
+```
 
-# Event: BookingCreated
+### Event: BookingCreated
+```json
 {
     "type": "booking_created",
     "booking_id": 123,
+    "user_id": 1,
     "user_email": "user@example.com",
     "hall_name": "Зал 1",
-    "seats": ["A1", "A2"],
     "start_time": "2026-03-30T14:00:00",
     "end_time": "2026-03-30T16:00:00",
     "total_price": "200.00"
 }
+```
 
-# Event: BookingCancelled
+### Event: BookingCancelled
+```json
 {
     "type": "booking_cancelled",
     "booking_id": 123,
+    "user_id": 1,
     "user_email": "user@example.com",
     "hall_name": "Зал 1"
 }
 ```
+
+### Kafka Worker (app/worker.py)
+- Connects to Kafka with retry logic (10 attempts, 5s delay)
+- Consumes `booking-events` topic
+- Processes `booking_created` and `booking_cancelled` events
+- Sends email notifications via SMTP
 
 ---
 
@@ -391,6 +424,7 @@ async def create_booking(
 - Always `await` async operations
 - Use `asyncio.gather()` for concurrent operations
 - Never block with sync operations
+- Use `selectinload()` for eager loading relationships
 
 ---
 
@@ -410,31 +444,30 @@ logger.error("Redis lock failed: %s", error)
 
 ## Testing Guidelines
 
-```python
-import pytest
-from httpx import AsyncClient, ASGITransport
-from app.main import app
+Tests are located in `tests/` directory:
+- `tests/conftest.py` - fixtures for client, db_session, auth tokens
+- `tests/test_auth.py` - authentication tests
+- `tests/test_halls.py` - hall CRUD tests
+- `tests/test_seats.py` - seat CRUD tests
+- `tests/test_bookings.py` - booking tests
 
-@pytest.fixture
-async def client():
-    transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        yield ac
-
-@pytest.mark.asyncio
-async def test_create_booking(client: AsyncClient, auth_headers: dict):
-    response = await client.post(
-        "/api/v1/bookings/",
-        json={
-            "hall_id": 1,
-            "seat_ids": [1, 2],
-            "start_time": "2026-03-30T14:00:00",
-            "end_time": "2026-03-30T16:00:00"
-        },
-        headers=auth_headers
-    )
-    assert response.status_code == 201
+Run tests:
+```bash
+pytest tests/ -v
+pytest --cov=app --cov-report=html  # with coverage
+pytest tests/test_auth.py -v          # specific file
+pytest tests/test_auth.py::test_register_success -v  # specific test
 ```
+
+Fixtures available in conftest.py:
+- `client` - AsyncClient with test app
+- `db_session` - SQLite in-memory database session
+- `registered_user` - Creates a regular user
+- `admin_user` - Creates an admin user
+- `user_token` / `admin_token` - JWT tokens
+- `auth_headers` / `admin_headers` - Auth headers for requests
+- `test_hall` - Creates a test hall
+- `test_seat` - Creates a test seat
 
 ---
 
@@ -490,21 +523,87 @@ SESSION_START_HOUR=9
 SESSION_END_HOUR=23
 ```
 
+### Docker Environment
+
+For Docker-compose, environment variables override `.env`:
+
+```yaml
+environment:
+  - DATABASE_URL=postgresql+asyncpg://user:pass@postgres:5432/booking_db
+  - REDIS_URL=redis://redis:6379/0
+  - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+```
+
+---
+
+## Important Notes for Agents
+
+### Common Issues and Solutions
+
+1. **ModuleNotFoundError: No module named 'app'**
+   - Use `python -m app.worker` instead of `python app/worker.py`
+
+2. **Kafka connection refused from worker**
+   - Use `kafka:9092` (Docker hostname) not `localhost:9092`
+   - Worker does NOT use `.env` file (env vars passed via `environment:` in compose)
+
+3. **SQLAlchemy MissingGreenlet error**
+   - Use `selectinload()` for eager loading relationships
+   - Don't access lazy-loaded relationships outside async context
+
+4. **Swagger Authorize - token rejected**
+   - Paste token **WITHOUT** `Bearer ` prefix
+   - Swagger auto-adds `Bearer ` prefix
+
+### Dockerfile Notes
+
+- API uses `.env` file (copied from `.env.example`)
+- Worker does NOT use `.env` (uses environment variables from compose)
+- Both use same Dockerfile, different commands
+
 ---
 
 ## Next Steps
 
-1. **Этап 4: Auth (JWT)**
-   - `app/core/security.py` — hash_password, verify_password, create_token, decode_token
-   - `app/core/dependencies.py` — get_current_user, get_current_admin
-   - `app/services/auth_service.py` — register, authenticate
-   - `app/routers/auth.py` — /auth/signup, /auth/login
+### All Completed (1-10)
+- [x] Этап 1: Базовая структура проекта
+- [x] Этап 2: Модели данных
+- [x] Этап 3: Pydantic Schemas
+- [x] Этап 4: Auth (JWT)
+- [x] Этап 5: CRUD ресурсов
+- [x] Этап 6: Бизнес-логика бронирования
+- [x] Этап 7: Kafka + Worker
+- [x] Этап 8: Docker + CI/CD
+- [x] Этап 9: Тесты (pytest)
+- [x] Этап 10: Финализировать документацию
 
-2. **Этап 5: CRUD ресурсов**
-   - `app/routers/users.py`
-   - `app/routers/halls.py`
-   - `app/routers/seats.py`
+---
 
-3. **Этап 6: Бизнес-логика бронирования**
-   - `app/services/booking_service.py`
-   - `app/routers/bookings.py`
+## Git Workflow
+
+```bash
+# Check status
+git status
+
+# Add and commit
+git add <files>
+git commit -m "fix: description of changes"
+
+# Push to remote
+git push
+
+# Or push with auto-stash
+git stash && git pull --rebase && git stash pop
+```
+
+### Commit Message Convention
+
+```
+<type>: <short description>
+
+<body>
+
+<footer>
+```
+
+Types: `fix:`, `feat:`, `docs:`, `refactor:`, `test:`, `chore:`

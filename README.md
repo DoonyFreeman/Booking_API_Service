@@ -14,12 +14,12 @@ REST API для бронирования залов кинотеатра с ме
 | Seats | CRUD мест (admin, bulk создание) |
 | Bookings | Создание, отмена, список бронирований |
 | Availability | Проверка доступных слотов (с кешированием) |
+| Kafka Worker | Обработка событий бронирования |
+| Docker | API + Worker в контейнерах |
 
 ### В разработке
 
-- Email уведомления (Kafka + Worker)
-- Docker + CI/CD
-- Тесты
+- Тесты (pytest)
 
 ## Tech Stack
 
@@ -27,30 +27,47 @@ FastAPI • PostgreSQL • Redis • Kafka • JWT • Docker
 
 ## Быстрый старт
 
-### Установка
+### Запуск
 
 ```bash
-python -m venv venv
-source venv/bin/activate
-pip install -e .
-cp .env.example .env
+docker-compose up --build
 ```
 
-### Запуск (нужен Docker)
-
-```bash
-docker-compose up -d postgres redis kafka
-alembic upgrade head
-uvicorn app.main:app --reload
-```
+API будет доступен по адресу: http://localhost:8000/docs
 
 ### Создание администратора
 
 ```bash
-python -m app.scripts.create_admin --email admin@test.com --password secret123
+docker exec booking_api python -m app.scripts.create_admin \
+  --email admin@test.com \
+  --password secret123
 ```
 
-### API Endpoints
+### Тестирование end-to-end
+
+1. Зайдите в Swagger UI: http://localhost:8000/docs
+2. Зарегистрируйтесь или войдите: POST /api/v1/auth/login
+3. Нажмите **Authorize** (🔓) и вставьте токен **БЕЗ** префикса `Bearer `
+4. Создайте зал: POST /api/v1/halls/
+5. Создайте места: POST /api/v1/halls/1/seats/bulk
+6. Создайте бронирование: POST /api/v1/bookings/
+7. Проверьте Kafka: смотрите логи worker или консоль consumer
+
+### Просмотр Kafka сообщений
+
+```bash
+docker exec booking_kafka /opt/kafka/bin/kafka-console-consumer.sh \
+  --topic booking-events --from-beginning --bootstrap-server localhost:9092
+```
+
+### Просмотр логов
+
+```bash
+docker-compose logs -f worker
+docker-compose logs -f api
+```
+
+## API Endpoints
 
 | Метод | Путь | Описание |
 |-------|------|----------|
@@ -58,7 +75,7 @@ python -m app.scripts.create_admin --email admin@test.com --password secret123
 | POST | /api/v1/auth/login | Вход (JWT) |
 | GET | /api/v1/users/me | Профиль |
 | GET | /api/v1/halls/ | Список залов |
-| POST | /api/v1/halls/ | Создать зал |
+| POST | /api/v1/halls/ | Создать зал (admin) |
 | GET | /api/v1/halls/{id}/seats/ | Места в зале |
 | POST | /api/v1/halls/{id}/seats/bulk | Bulk создание мест |
 | POST | /api/v1/bookings/ | Создать бронирование |
@@ -88,7 +105,7 @@ graph TB
     R --> DB
     R --> Redis
     R --> Kafka
-    Kafka --> SMTP
+    R --> SMTP
 
     subgraph Workers
         W[Email Worker]
@@ -114,4 +131,18 @@ sequenceDiagram
     API-->>User: 201 Created
     Kafka->>Worker: booking_created
     Worker->>SMTP: Send email
+```
+
+## Environment Variables
+
+```bash
+# Для локальной разработки (.env)
+DATABASE_URL=postgresql+asyncpg://user:pass@localhost:5432/booking_db
+REDIS_URL=redis://localhost:6379/0
+KAFKA_BOOTSTRAP_SERVERS=localhost:9092
+
+# Для Docker (.env в compose)
+# DATABASE_URL, REDIS_URL, KAFKA_BOOTSTRAP_SERVERS
+# задаются через environment: в docker-compose.yml
+# ВАЖНО: KAFKA_BOOTSTRAP_SERVERS=kafka:9092 (не localhost!)
 ```
