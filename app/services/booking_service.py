@@ -224,6 +224,7 @@ async def cancel_booking(
         raise BookingConflictError("Booking already cancelled")
 
     user_email = booking.user.email if booking.user else ""
+    hall_name = booking.hall.name if booking.hall else "Unknown"
 
     booking.status = BookingStatus.cancelled
     await db.flush()
@@ -235,7 +236,7 @@ async def cancel_booking(
             "booking_id": booking.id,
             "user_id": user_id,
             "user_email": user_email,
-            "hall_name": booking.hall.name if booking.hall else "Unknown",
+            "hall_name": hall_name,
         },
     )
 
