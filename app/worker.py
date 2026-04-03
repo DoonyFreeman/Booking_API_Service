@@ -34,9 +34,11 @@ async def process_event(event: dict[str, Any]) -> None:
         logger.warning(f"Unknown event type: {event_type}")
 
 
-async def run_worker() -> None:
-    logger.info("Starting email worker...")
+MAX_RETRIES = 10
+RETRY_DELAY = 5
 
+
+async def wait_for_kafka() -> AIOKafkaConsumer:
     consumer = AIOKafkaConsumer(
         settings.KAFKA_TOPIC_BOOKING_EVENTS,
         bootstrap_servers=settings.KAFKA_BOOTSTRAP_SERVERS,
@@ -44,7 +46,28 @@ async def run_worker() -> None:
         value_deserializer=lambda m: json.loads(m.decode("utf-8")),
     )
 
-    await consumer.start()
+    for attempt in range(1, MAX_RETRIES + 1):
+        try:
+            logger.info(f"Connecting to Kafka (attempt {attempt}/{MAX_RETRIES})...")
+            await consumer.start()
+            logger.info("Kafka consumer started successfully")
+            return consumer
+        except Exception as e:
+            logger.warning(f"Kafka not ready: {e}")
+            if attempt < MAX_RETRIES:
+                logger.info(f"Retrying in {RETRY_DELAY} seconds...")
+                await asyncio.sleep(RETRY_DELAY)
+            else:
+                await consumer.stop()
+                raise RuntimeError("Failed to connect to Kafka after maximum retries")
+
+    raise RuntimeError("Should not reach here")
+
+
+async def run_worker() -> None:
+    logger.info("Starting email worker...")
+
+    consumer = await wait_for_kafka()
     logger.info(f"Consumer started, listening to {settings.KAFKA_TOPIC_BOOKING_EVENTS}")
 
     try:

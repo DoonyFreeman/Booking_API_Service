@@ -38,7 +38,6 @@ RUN pip install --no-cache-dir \
 COPY app/ app/
 COPY alembic/ alembic/
 COPY alembic.ini .
-COPY .env.example .env
 
 # Expose port
 EXPOSE 8000
