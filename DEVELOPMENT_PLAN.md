@@ -611,14 +611,14 @@ curl -X POST http://localhost:8000/api/v1/bookings/ \
 | 5 | `app/services/booking_service.py` | `MissingGreenlet` после `refresh()` | `af83e37` |
 | - | `tests/test_bookings.py` | активация пропущенных тестов | `6c39be9` |
 
-### Этап Р2: Нейминг и унификация стилей
+### Этап Р2: Нейминг и унификация стилей ✅ ЗАВЕРШЁН
 | # | Файл | Проблема | Действие | Статус |
 |---|------|----------|----------|--------|
-| 1 | `app/routers/auth.py` | Непоследовательный DI (нет `Annotated`) | Добавить `Annotated[...]` | ☐ |
-| 2 | `app/core/dependencies.py` | `get_token_from_header` помечен как `async` | Убрать `async` | ☐ |
-| 3 | `app/redis.py` | Разные префиксы lock ключей | Унифицировать | ☐ |
-| 4 | `app/exceptions.py` | Отсутствуют `UserNotFoundError`, `SeatAlreadyExistsError` | Добавить | ☐ |
-| 5 | `app/routers/users.py` | `ValueError` вместо кастомных исключений | Заменить | ☐ |
+| 1 | `app/routers/auth.py` | Непоследовательный DI (нет `Annotated`) | Добавить `Annotated[...]` | ✅ |
+| 2 | `app/core/dependencies.py` | `get_token_from_header` помечен как `async` | Убрать `async` | ✅ |
+| 3 | `app/redis.py` | Неиспользуемые `acquire_lock`, `release_lock` | Удалить | ✅ |
+| 4 | `app/exceptions.py` | Отсутствует `SeatAlreadyExistsError` | Добавить | ✅ |
+| 5 | `app/routers/users.py`, `booking_service.py` | `ValueError` вместо кастомных исключений | Заменить | ✅ |
 
 ### Этап Р3: Архитектура (Service Layer)
 | # | Компонент | Текущее | Целевое | Статус |
