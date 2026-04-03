@@ -18,20 +18,33 @@ from app.schemas import (
     PaginatedResponse,
     PaginationParams,
     TimeSlotResponse,
+    pagination_params,
 )
 from app.services import booking_service
 
 router = APIRouter(prefix="/bookings", tags=["bookings"])
 
 
-def booking_to_response(booking) -> BookingResponse:
+async def booking_to_response(
+    booking,
+    db: AsyncSession,
+) -> BookingResponse:
+    seats_result = await db.execute(
+        select(Seat).where(Seat.id.in_([bs.seat_id for bs in booking.booking_seats]))
+    )
+    seats = {s.id: s for s in seats_result.scalars().all()}
+
     return BookingResponse(
         id=booking.id,
         user_id=booking.user_id,
         hall_id=booking.hall_id,
         hall_name=booking.hall.name if booking.hall else "Unknown",
         seats=[
-            BookingSeatResponse(id=bs.seat_id, row=0, number=0)
+            BookingSeatResponse(
+                id=bs.seat_id,
+                row=seats[bs.seat_id].row,
+                number=seats[bs.seat_id].number,
+            )
             for bs in booking.booking_seats
         ],
         start_time=booking.start_time,
@@ -44,7 +57,7 @@ def booking_to_response(booking) -> BookingResponse:
 
 @router.get("/", response_model=PaginatedResponse[BookingResponse])
 async def list_bookings(
-    pagination: PaginationParams,
+    pagination: Annotated[PaginationParams, Depends(pagination_params)],
     current_user: CurrentUser,
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> PaginatedResponse[BookingResponse]:
@@ -55,7 +68,7 @@ async def list_bookings(
         page_size=pagination.page_size,
     )
 
-    items = [booking_to_response(b) for b in bookings]
+    items = [await booking_to_response(b, db) for b in bookings]
 
     return PaginatedResponse.create(
         items=items,
