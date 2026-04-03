@@ -11,8 +11,8 @@ from app.models import User
 from app.models.enums import UserRole
 
 
-async def get_token_from_header(
-    authorization: Annotated[str, Header()] = None,
+def get_token_from_header(
+    authorization: Annotated[str | None, Header()] = None,
 ) -> str:
     if not authorization:
         raise UnauthorizedError("Missing authorization header")
