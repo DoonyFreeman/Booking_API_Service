@@ -33,6 +33,14 @@ class SeatNotFoundError(HTTPException):
         )
 
 
+class SeatAlreadyExistsError(HTTPException):
+    def __init__(self, detail: str = "Seat already exists") -> None:
+        super().__init__(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=detail,
+        )
+
+
 class UserNotFoundError(HTTPException):
     def __init__(self, detail: str = "User not found") -> None:
         super().__init__(
