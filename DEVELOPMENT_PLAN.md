@@ -594,3 +594,56 @@ curl -X POST http://localhost:8000/api/v1/bookings/ \
 8. **Этап 8** — Docker + CI
 9. **Этап 9** — Тесты
 10. **Этап 10** — README
+
+---
+
+## Рефакторинг (после Этапа 10)
+
+### Статус: В ПРОЦЕССЕ
+
+### Этап Р1: Исправление критических багов ✅ ЗАВЕРШЁН
+| # | Файл | Проблема | Коммит |
+|---|------|----------|--------|
+| 1 | `app/routers/bookings.py` | hardcoded `row=0, number=0` | `585c958` |
+| 2 | `app/schemas/hall.py` | невалидный `decimal_places=2` | `55bff6b` |
+| 3 | `tests/conftest.py` | строка вместо `UserRole` enum | `328b3d6` |
+| 4 | `app/schemas/common.py` | отсутствовал `pagination_params()` | `43f93c1` |
+| 5 | `app/services/booking_service.py` | `MissingGreenlet` после `refresh()` | `af83e37` |
+| - | `tests/test_bookings.py` | активация пропущенных тестов | `6c39be9` |
+
+### Этап Р2: Нейминг и унификация стилей
+| # | Файл | Проблема | Действие | Статус |
+|---|------|----------|----------|--------|
+| 1 | `app/routers/auth.py` | Непоследовательный DI (нет `Annotated`) | Добавить `Annotated[...]` | ☐ |
+| 2 | `app/core/dependencies.py` | `get_token_from_header` помечен как `async` | Убрать `async` | ☐ |
+| 3 | `app/redis.py` | Разные префиксы lock ключей | Унифицировать | ☐ |
+| 4 | `app/exceptions.py` | Отсутствуют `UserNotFoundError`, `SeatAlreadyExistsError` | Добавить | ☐ |
+| 5 | `app/routers/users.py` | `ValueError` вместо кастомных исключений | Заменить | ☐ |
+
+### Этап Р3: Архитектура (Service Layer)
+| # | Компонент | Текущее | Целевое | Статус |
+|---|-----------|---------|---------|--------|
+| 1 | Service Layer | Только `booking_service.py` | Добавить `user_service.py`, `hall_service.py` | ☐ |
+| 2 | Exception Handling | Разбросано по роутерам | Глобальные handlers в `main.py` | ☐ |
+| 3 | Hall Validation | Дублируется 4 раза в `seats.py` | Вынести в `hall_service.py` | ☐ |
+| 4 | Booking Response | Дублируется 3 раза | Унифицировать | ☐ |
+
+### Этап Р4: Качество кода
+| # | Файл | Проблема | Действие | Статус |
+|---|------|----------|----------|--------|
+| 1 | `app/utils/` | Пустая папка | Удалить | ☐ |
+| 2 | `app/redis.py` | Неиспользуемые `acquire_lock`, `release_lock` | Удалить | ☐ |
+| 3 | `app/services/notification_service.py` | Неиспользуемая функция | Удалить или задокументировать | ☐ |
+
+### Этап Р5: Performance оптимизация
+| # | Файл | Проблема | Решение | Статус |
+|---|------|----------|---------|--------|
+| 1 | `app/routers/users.py:30-31` | `COUNT` через `len(all())` | `select(func.count())` | ☐ |
+| 2 | `app/services/booking_service.py:276-277` | То же | То же | ☐ |
+| 3 | `app/main.py` | Health check без проверки зависимостей | Добавить проверки DB/Redis/Kafka | ☐ |
+
+### Этап Р6: Очистка
+| # | Задача | Статус |
+|---|--------|--------|
+| 1 | Обновить версию `bcrypt` в `pyproject.toml` | ☐ |
+| 2 | Проверить неиспользуемые импорты (`ruff check --unused`) | ☐ |
