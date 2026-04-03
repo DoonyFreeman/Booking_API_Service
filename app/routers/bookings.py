@@ -3,6 +3,7 @@ from typing import Annotated
 
 import redis.asyncio as redis
 from fastapi import APIRouter, Depends, status
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import CurrentUser
