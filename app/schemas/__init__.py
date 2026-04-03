@@ -11,7 +11,7 @@ from app.schemas.booking import (
     BookingSeatResponse,
     TimeSlotResponse,
 )
-from app.schemas.common import PaginatedResponse, PaginationParams
+from app.schemas.common import PaginatedResponse, PaginationParams, pagination_params
 from app.schemas.hall import HallCreate, HallResponse, HallUpdate
 from app.schemas.seat import SeatBulkCreate, SeatCreate, SeatResponse
 from app.schemas.user import UserCreate, UserResponse, UserUpdate
@@ -43,4 +43,5 @@ __all__ = [
     # Common
     "PaginationParams",
     "PaginatedResponse",
+    "pagination_params",
 ]
