@@ -176,6 +176,13 @@ async def create_booking(
         await db.flush()
         await db.refresh(booking)
 
+        result = await db.execute(
+            select(Booking)
+            .options(selectinload(Booking.hall), selectinload(Booking.booking_seats))
+            .where(Booking.id == booking.id)
+        )
+        booking = result.scalar_one()
+
         await send_booking_event(
             "booking_created",
             {
@@ -202,7 +209,7 @@ async def cancel_booking(
 ) -> Booking:
     result = await db.execute(
         select(Booking)
-        .options(selectinload(Booking.user))
+        .options(selectinload(Booking.user), selectinload(Booking.hall))
         .where(Booking.id == booking_id)
     )
     booking = result.scalar_one_or_none()
