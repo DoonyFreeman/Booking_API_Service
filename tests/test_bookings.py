@@ -79,9 +79,6 @@ async def test_create_booking_hall_not_found(
 
 
 @pytest.mark.asyncio
-@pytest.mark.skip(
-    reason="PaginationParams requires body in FastAPI - router needs update"
-)
 async def test_list_bookings(
     client: AsyncClient,
     auth_headers: dict,
@@ -142,7 +139,6 @@ async def test_get_booking(
 
 
 @pytest.mark.asyncio
-@pytest.mark.skip(reason="SQLAlchemy async session state issue with SQLite in test")
 async def test_cancel_booking(
     client: AsyncClient,
     auth_headers: dict,
