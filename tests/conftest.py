@@ -10,6 +10,7 @@ from sqlalchemy.pool import StaticPool
 
 from app.db import Base, get_db
 from app.models import User
+from app.models.enums import UserRole
 from app.redis import get_redis
 
 TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
@@ -126,7 +127,7 @@ async def admin_user(client: AsyncClient, db_session: AsyncSession) -> dict[str,
         select(User).where(User.email == "admin@test.com")
     )
     user = result.scalar_one()
-    user.role = "admin"
+    user.role = UserRole.admin
     await db_session.commit()
 
     return {"email": "admin@test.com", "password": "adminpass123"}
