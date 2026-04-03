@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import CurrentUser
 from app.db import get_db
+from app.models import Seat
 from app.redis import get_redis
 from app.schemas import (
     BookingCreate,
@@ -76,13 +77,7 @@ async def get_booking(
     )
 
     seats_result = await db.execute(
-        __import__("sqlalchemy")
-        .select(__import__("app.models").Seat)
-        .where(
-            __import__("app.models").Seat.id.in_(
-                [bs.seat_id for bs in booking.booking_seats]
-            )
-        )
+        select(Seat).where(Seat.id.in_([bs.seat_id for bs in booking.booking_seats]))
     )
     seats = {s.id: s for s in seats_result.scalars().all()}
 
@@ -128,11 +123,7 @@ async def create_booking(
         end_time=data.end_time,
     )
 
-    seats_result = await db.execute(
-        __import__("sqlalchemy")
-        .select(__import__("app.models").Seat)
-        .where(__import__("app.models").Seat.id.in_(data.seat_ids))
-    )
+    seats_result = await db.execute(select(Seat).where(Seat.id.in_(data.seat_ids)))
     seats = {s.id: s for s in seats_result.scalars().all()}
 
     return BookingResponse(
