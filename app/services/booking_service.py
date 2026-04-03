@@ -15,6 +15,7 @@ from app.exceptions import (
     HallNotFoundError,
     InvalidTimeSlotError,
     SeatNotFoundError,
+    UserNotFoundError,
 )
 from app.kafka import send_booking_event
 from app.models import Booking, BookingSeat, Hall, Seat, User
@@ -137,7 +138,7 @@ async def create_booking(
     user_result = await db.execute(select(User).where(User.id == user_id))
     user = user_result.scalar_one_or_none()
     if not user:
-        raise ValueError("User not found")
+        raise UserNotFoundError()
 
     await validate_time_slot(start_time, end_time)
     await validate_seats_exist(db, hall_id, seat_ids)
