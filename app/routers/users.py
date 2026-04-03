@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import AdminUser, CurrentUser
 from app.db import get_db
+from app.exceptions import UserNotFoundError
 from app.models import User
 from app.schemas import PaginatedResponse, PaginationParams, UserResponse, UserUpdate
 
@@ -53,7 +54,7 @@ async def get_user(
     user = result.scalar_one_or_none()
 
     if not user:
-        raise ValueError("User not found")
+        raise UserNotFoundError()
 
     return UserResponse.model_validate(user)
 
@@ -69,7 +70,7 @@ async def update_user(
     user = result.scalar_one_or_none()
 
     if not user:
-        raise ValueError("User not found")
+        raise UserNotFoundError()
 
     update_data = data.model_dump(exclude_unset=True)
     for field, value in update_data.items():
