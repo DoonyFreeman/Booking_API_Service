@@ -1,3 +1,5 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -22,7 +24,7 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 )
 async def signup(
     data: RegisterRequest,
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> RegisterResponse:
     try:
         user = await auth_service.register_user(
@@ -38,7 +40,7 @@ async def signup(
 @router.post("/login", response_model=TokenResponse)
 async def login(
     data: LoginRequest,
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> TokenResponse:
     try:
         user = await auth_service.authenticate_user(
