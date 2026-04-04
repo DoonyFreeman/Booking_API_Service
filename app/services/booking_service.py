@@ -1,10 +1,10 @@
 import json
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 from decimal import Decimal
 from typing import Any
 
 import redis.asyncio as redis
-from sqlalchemy import and_, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -21,7 +21,6 @@ from app.kafka import send_booking_event
 from app.models import Booking, BookingSeat, Hall, Seat, User
 from app.models.enums import BookingStatus
 from app.schemas import BookingResponse, BookingSeatResponse
-
 
 CACHE_TTL = 300
 CACHE_PREFIX = "slots:hall:"

@@ -1,5 +1,5 @@
-import asyncio
 import argparse
+import asyncio
 
 from sqlalchemy import select
 

@@ -1,6 +1,3 @@
-from contextlib import asynccontextmanager
-from typing import AsyncGenerator
-
 import redis.asyncio as redis
 
 from app.config import settings

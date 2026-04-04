@@ -5,16 +5,15 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
-
 from app.config import settings
-from app.models.base import Base
 from app.models import (  # noqa: F401
-    User,
-    Hall,
-    Seat,
     Booking,
     BookingSeat,
+    Hall,
+    Seat,
+    User,
 )
+from app.models.base import Base
 
 config = context.config
 

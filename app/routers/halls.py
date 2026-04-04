@@ -1,6 +1,6 @@
 from typing import Annotated, List
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -8,7 +8,7 @@ from sqlalchemy.orm import selectinload
 from app.core.dependencies import AdminUser, CurrentUser
 from app.db import get_db
 from app.exceptions import HallNotFoundError
-from app.models import Hall, Seat
+from app.models import Hall
 from app.schemas import HallCreate, HallResponse, HallUpdate
 
 router = APIRouter(prefix="/halls", tags=["halls"])
