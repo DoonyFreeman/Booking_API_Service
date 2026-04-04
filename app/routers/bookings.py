@@ -3,20 +3,14 @@ from typing import Annotated
 
 import redis.asyncio as redis
 from fastapi import APIRouter, Depends, status
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import CurrentUser
 from app.db import get_db
-from app.models import Seat
 from app.redis import get_redis
 from app.schemas import (
     BookingCreate,
-    BookingListResponse,
     BookingResponse,
-    BookingSeatResponse,
     PaginatedResponse,
-    PaginationParams,
     TimeSlotResponse,
     pagination_params,
 )
@@ -25,41 +19,11 @@ from app.services import booking_service
 router = APIRouter(prefix="/bookings", tags=["bookings"])
 
 
-async def booking_to_response(
-    booking,
-    db: AsyncSession,
-) -> BookingResponse:
-    seats_result = await db.execute(
-        select(Seat).where(Seat.id.in_([bs.seat_id for bs in booking.booking_seats]))
-    )
-    seats = {s.id: s for s in seats_result.scalars().all()}
-
-    return BookingResponse(
-        id=booking.id,
-        user_id=booking.user_id,
-        hall_id=booking.hall_id,
-        hall_name=booking.hall.name if booking.hall else "Unknown",
-        seats=[
-            BookingSeatResponse(
-                id=bs.seat_id,
-                row=seats[bs.seat_id].row,
-                number=seats[bs.seat_id].number,
-            )
-            for bs in booking.booking_seats
-        ],
-        start_time=booking.start_time,
-        end_time=booking.end_time,
-        total_price=booking.total_price,
-        status=booking.status,
-        created_at=booking.created_at,
-    )
-
-
 @router.get("/", response_model=PaginatedResponse[BookingResponse])
 async def list_bookings(
-    pagination: Annotated[PaginationParams, Depends(pagination_params)],
+    pagination: Annotated[..., Depends(pagination_params)],
     current_user: CurrentUser,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[..., Depends(get_db)],
 ) -> PaginatedResponse[BookingResponse]:
     bookings, total = await booking_service.get_user_bookings(
         db=db,
@@ -68,7 +32,7 @@ async def list_bookings(
         page_size=pagination.page_size,
     )
 
-    items = [await booking_to_response(b, db) for b in bookings]
+    items = [await booking_service.build_booking_response(db, b) for b in bookings]
 
     return PaginatedResponse.create(
         items=items,
@@ -82,38 +46,14 @@ async def list_bookings(
 async def get_booking(
     booking_id: int,
     current_user: CurrentUser,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[..., Depends(get_db)],
 ) -> BookingResponse:
     booking = await booking_service.get_booking_by_id(
         db=db,
         booking_id=booking_id,
         user_id=current_user.id,
     )
-
-    seats_result = await db.execute(
-        select(Seat).where(Seat.id.in_([bs.seat_id for bs in booking.booking_seats]))
-    )
-    seats = {s.id: s for s in seats_result.scalars().all()}
-
-    return BookingResponse(
-        id=booking.id,
-        user_id=booking.user_id,
-        hall_id=booking.hall_id,
-        hall_name=booking.hall.name if booking.hall else "Unknown",
-        seats=[
-            BookingSeatResponse(
-                id=bs.seat_id,
-                row=seats[bs.seat_id].row,
-                number=seats[bs.seat_id].number,
-            )
-            for bs in booking.booking_seats
-        ],
-        start_time=booking.start_time,
-        end_time=booking.end_time,
-        total_price=booking.total_price,
-        status=booking.status,
-        created_at=booking.created_at,
-    )
+    return await booking_service.build_booking_response(db, booking)
 
 
 @router.post(
@@ -124,7 +64,7 @@ async def get_booking(
 async def create_booking(
     data: BookingCreate,
     current_user: CurrentUser,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[..., Depends(get_db)],
     redis_client: redis.Redis = Depends(get_redis),
 ) -> BookingResponse:
     booking = await booking_service.create_booking(
@@ -136,36 +76,14 @@ async def create_booking(
         start_time=data.start_time,
         end_time=data.end_time,
     )
-
-    seats_result = await db.execute(select(Seat).where(Seat.id.in_(data.seat_ids)))
-    seats = {s.id: s for s in seats_result.scalars().all()}
-
-    return BookingResponse(
-        id=booking.id,
-        user_id=booking.user_id,
-        hall_id=booking.hall_id,
-        hall_name=booking.hall.name if booking.hall else "Unknown",
-        seats=[
-            BookingSeatResponse(
-                id=bs.seat_id,
-                row=seats[bs.seat_id].row,
-                number=seats[bs.seat_id].number,
-            )
-            for bs in booking.booking_seats
-        ],
-        start_time=booking.start_time,
-        end_time=booking.end_time,
-        total_price=booking.total_price,
-        status=booking.status,
-        created_at=booking.created_at,
-    )
+    return await booking_service.build_booking_response(db, booking)
 
 
 @router.delete("/{booking_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def cancel_booking(
     booking_id: int,
     current_user: CurrentUser,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[..., Depends(get_db)],
 ) -> None:
     await booking_service.cancel_booking(
         db=db,
@@ -182,7 +100,7 @@ async def get_availability(
     hall_id: int,
     date: date,
     current_user: CurrentUser,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[..., Depends(get_db)],
     redis_client: redis.Redis = Depends(get_redis),
 ) -> list[TimeSlotResponse]:
     slots = await booking_service.get_available_slots(

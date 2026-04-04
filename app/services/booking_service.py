@@ -20,10 +20,41 @@ from app.exceptions import (
 from app.kafka import send_booking_event
 from app.models import Booking, BookingSeat, Hall, Seat, User
 from app.models.enums import BookingStatus
+from app.schemas import BookingResponse, BookingSeatResponse
 
 
 CACHE_TTL = 300
 CACHE_PREFIX = "slots:hall:"
+
+
+async def build_booking_response(
+    db: AsyncSession,
+    booking: Booking,
+) -> BookingResponse:
+    seats_result = await db.execute(
+        select(Seat).where(Seat.id.in_([bs.seat_id for bs in booking.booking_seats]))
+    )
+    seats = {s.id: s for s in seats_result.scalars().all()}
+
+    return BookingResponse(
+        id=booking.id,
+        user_id=booking.user_id,
+        hall_id=booking.hall_id,
+        hall_name=booking.hall.name if booking.hall else "Unknown",
+        seats=[
+            BookingSeatResponse(
+                id=bs.seat_id,
+                row=seats[bs.seat_id].row,
+                number=seats[bs.seat_id].number,
+            )
+            for bs in booking.booking_seats
+        ],
+        start_time=booking.start_time,
+        end_time=booking.end_time,
+        total_price=booking.total_price,
+        status=booking.status,
+        created_at=booking.created_at,
+    )
 
 
 async def validate_time_slot(start_time: datetime, end_time: datetime) -> None:

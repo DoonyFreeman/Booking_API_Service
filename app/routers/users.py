@@ -1,14 +1,12 @@
-from typing import Annotated, List
+from typing import Annotated
 
-from fastapi import APIRouter, Depends, status
-from sqlalchemy import select
+from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import AdminUser, CurrentUser
 from app.db import get_db
-from app.exceptions import UserNotFoundError
-from app.models import User
 from app.schemas import PaginatedResponse, PaginationParams, UserResponse, UserUpdate
+from app.services import user_service
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -22,19 +20,15 @@ async def get_current_user_profile(
 
 @router.get("/", response_model=PaginatedResponse[UserResponse])
 async def list_users(
-    pagination: PaginationParams,
+    pagination: Annotated[PaginationParams, Depends()],
     db: Annotated[AsyncSession, Depends(get_db)],
     admin: AdminUser,
 ) -> PaginatedResponse[UserResponse]:
-    offset = (pagination.page - 1) * pagination.page_size
-
-    total_result = await db.execute(select(User))
-    total = len(total_result.scalars().all())
-
-    result = await db.execute(
-        select(User).order_by(User.id).offset(offset).limit(pagination.page_size)
+    users, total = await user_service.list_users(
+        db=db,
+        page=pagination.page,
+        page_size=pagination.page_size,
     )
-    users = result.scalars().all()
 
     return PaginatedResponse.create(
         items=[UserResponse.model_validate(u) for u in users],
@@ -50,12 +44,11 @@ async def get_user(
     db: Annotated[AsyncSession, Depends(get_db)],
     admin: AdminUser,
 ) -> UserResponse:
-    result = await db.execute(select(User).where(User.id == user_id))
-    user = result.scalar_one_or_none()
-
+    user = await user_service.get_user_by_id(db, user_id)
     if not user:
-        raise UserNotFoundError()
+        from app.exceptions import UserNotFoundError
 
+        raise UserNotFoundError()
     return UserResponse.model_validate(user)
 
 
@@ -66,17 +59,6 @@ async def update_user(
     db: Annotated[AsyncSession, Depends(get_db)],
     admin: AdminUser,
 ) -> UserResponse:
-    result = await db.execute(select(User).where(User.id == user_id))
-    user = result.scalar_one_or_none()
-
-    if not user:
-        raise UserNotFoundError()
-
     update_data = data.model_dump(exclude_unset=True)
-    for field, value in update_data.items():
-        setattr(user, field, value)
-
-    await db.flush()
-    await db.refresh(user)
-
+    user = await user_service.update_user(db, user_id, update_data)
     return UserResponse.model_validate(user)
