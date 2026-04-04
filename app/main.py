@@ -2,12 +2,24 @@ import logging
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
+from fastapi.responses import JSONResponse
 
 from app.config import settings
 from app.db import create_tables
+from app.exceptions import (
+    BookingConflictError,
+    BookingNotFoundError,
+    ForbiddenError,
+    HallNotFoundError,
+    InvalidTimeSlotError,
+    SeatAlreadyExistsError,
+    SeatNotFoundError,
+    UnauthorizedError,
+    UserNotFoundError,
+)
 from app.kafka import close_kafka, init_kafka
 from app.redis import close_redis, init_redis
 from app.routers import auth, bookings, halls, seats, users
@@ -72,6 +84,42 @@ def create_app() -> FastAPI:
     app.include_router(halls.router, prefix="/api/v1")
     app.include_router(seats.router, prefix="/api/v1")
     app.include_router(bookings.router, prefix="/api/v1")
+
+    @app.exception_handler(BookingConflictError)
+    async def booking_conflict_handler(request: Request, exc: BookingConflictError):
+        return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
+
+    @app.exception_handler(BookingNotFoundError)
+    async def booking_not_found_handler(request: Request, exc: BookingNotFoundError):
+        return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
+
+    @app.exception_handler(HallNotFoundError)
+    async def hall_not_found_handler(request: Request, exc: HallNotFoundError):
+        return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
+
+    @app.exception_handler(SeatNotFoundError)
+    async def seat_not_found_handler(request: Request, exc: SeatNotFoundError):
+        return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
+
+    @app.exception_handler(SeatAlreadyExistsError)
+    async def seat_exists_handler(request: Request, exc: SeatAlreadyExistsError):
+        return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
+
+    @app.exception_handler(UserNotFoundError)
+    async def user_not_found_handler(request: Request, exc: UserNotFoundError):
+        return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
+
+    @app.exception_handler(InvalidTimeSlotError)
+    async def invalid_slot_handler(request: Request, exc: InvalidTimeSlotError):
+        return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
+
+    @app.exception_handler(UnauthorizedError)
+    async def unauthorized_handler(request: Request, exc: UnauthorizedError):
+        return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
+
+    @app.exception_handler(ForbiddenError)
+    async def forbidden_handler(request: Request, exc: ForbiddenError):
+        return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
 
     return app
 
