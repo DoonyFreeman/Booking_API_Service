@@ -620,13 +620,13 @@ curl -X POST http://localhost:8000/api/v1/bookings/ \
 | 4 | `app/exceptions.py` | Отсутствует `SeatAlreadyExistsError` | Добавить | ✅ |
 | 5 | `app/routers/users.py`, `booking_service.py` | `ValueError` вместо кастомных исключений | Заменить | ✅ |
 
-### Этап Р3: Архитектура (Service Layer)
-| # | Компонент | Текущее | Целевое | Статус |
+### Этап Р3: Архитектура (Service Layer) ✅ ЗАВЕРШЁН
+| # | Компонент | Текущее | Целевое | Коммит |
 |---|-----------|---------|---------|--------|
-| 1 | Service Layer | Только `booking_service.py` | Добавить `user_service.py`, `hall_service.py` | ☐ |
-| 2 | Exception Handling | Разбросано по роутерам | Глобальные handlers в `main.py` | ☐ |
-| 3 | Hall Validation | Дублируется 4 раза в `seats.py` | Вынести в `hall_service.py` | ☐ |
-| 4 | Booking Response | Дублируется 3 раза | Унифицировать | ☐ |
+| 1 | Service Layer | Только `booking_service.py` | Добавить `user_service.py`, `hall_service.py` | `b046fa2` |
+| 2 | Exception Handling | Разбросано по роутерам | Глобальные handlers в `main.py` | `40baaff` |
+| 3 | Hall Validation | Дублируется 4 раза в `seats.py` | Вынести в `hall_service.py` | `b046fa2` |
+| 4 | Booking Response | Дублируется 3 раза | Унифицировать | `cea9f68` |
 
 ### Этап Р4: Качество кода
 | # | Файл | Проблема | Действие | Статус |
