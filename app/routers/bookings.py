@@ -2,10 +2,11 @@ from datetime import date
 from typing import Annotated
 
 import redis.asyncio as redis
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Request, status
 
 from app.core.dependencies import CurrentUser
 from app.db import get_db
+from app.limiter import bookings_limit, limiter
 from app.redis import get_redis
 from app.schemas import (
     BookingCreate,
@@ -20,7 +21,9 @@ router = APIRouter(prefix="/bookings", tags=["bookings"])
 
 
 @router.get("/", response_model=PaginatedResponse[BookingResponse])
+@limiter.limit(bookings_limit)
 async def list_bookings(
+    request: Request,
     pagination: Annotated[..., Depends(pagination_params)],
     current_user: CurrentUser,
     db: Annotated[..., Depends(get_db)],
@@ -43,7 +46,9 @@ async def list_bookings(
 
 
 @router.get("/{booking_id}", response_model=BookingResponse)
+@limiter.limit(bookings_limit)
 async def get_booking(
+    request: Request,
     booking_id: int,
     current_user: CurrentUser,
     db: Annotated[..., Depends(get_db)],
@@ -61,7 +66,9 @@ async def get_booking(
     response_model=BookingResponse,
     status_code=status.HTTP_201_CREATED,
 )
+@limiter.limit(bookings_limit)
 async def create_booking(
+    request: Request,
     data: BookingCreate,
     current_user: CurrentUser,
     db: Annotated[..., Depends(get_db)],
@@ -80,7 +87,9 @@ async def create_booking(
 
 
 @router.delete("/{booking_id}", status_code=status.HTTP_204_NO_CONTENT)
+@limiter.limit(bookings_limit)
 async def cancel_booking(
+    request: Request,
     booking_id: int,
     current_user: CurrentUser,
     db: Annotated[..., Depends(get_db)],
@@ -96,7 +105,9 @@ async def cancel_booking(
     "/halls/{hall_id}/availability",
     response_model=list[TimeSlotResponse],
 )
+@limiter.limit(bookings_limit)
 async def get_availability(
+    request: Request,
     hall_id: int,
     date: date,
     current_user: CurrentUser,

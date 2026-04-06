@@ -201,6 +201,10 @@ async def test_seat(
 
 
 def create_app():
+    from app.limiter import limiter
     from app.main import create_app as _create_app
 
-    return _create_app()
+    app = _create_app()
+    app.state.limiter = limiter
+    limiter.enabled = False
+    return app

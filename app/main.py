@@ -9,6 +9,7 @@ from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse
+from slowapi.errors import RateLimitExceeded
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -26,6 +27,7 @@ from app.exceptions import (
     UserNotFoundError,
 )
 from app.kafka import close_kafka, init_kafka, kafka_producer
+from app.limiter import limiter
 from app.redis import close_redis, get_redis, init_redis
 from app.routers import auth, bookings, halls, seats, users
 
@@ -78,6 +80,8 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
+    app.state.limiter = limiter
+
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.CORS_ORIGINS,
@@ -127,6 +131,13 @@ def create_app() -> FastAPI:
     @app.exception_handler(ForbiddenError)
     async def forbidden_handler(request: Request, exc: ForbiddenError):
         return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
+
+    @app.exception_handler(RateLimitExceeded)
+    async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
+        return JSONResponse(
+            status_code=429,
+            content={"detail": "Too many requests. Please try again later."},
+        )
 
     return app
 

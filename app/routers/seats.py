@@ -1,10 +1,11 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import AdminUser, CurrentUser
 from app.db import get_db
+from app.limiter import limiter, seats_limit
 from app.schemas import SeatBulkCreate, SeatCreate, SeatResponse
 from app.services import seat_service
 
@@ -12,7 +13,9 @@ router = APIRouter(prefix="/halls/{hall_id}/seats", tags=["seats"])
 
 
 @router.get("/", response_model=list[SeatResponse])
+@limiter.limit(seats_limit)
 async def list_seats(
+    request: Request,
     hall_id: int,
     db: Annotated[AsyncSession, Depends(get_db)],
     current_user: CurrentUser,
@@ -26,7 +29,9 @@ async def list_seats(
     response_model=SeatResponse,
     status_code=status.HTTP_201_CREATED,
 )
+@limiter.limit(seats_limit)
 async def create_seat(
+    request: Request,
     hall_id: int,
     data: SeatCreate,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -46,7 +51,9 @@ async def create_seat(
     response_model=list[SeatResponse],
     status_code=status.HTTP_201_CREATED,
 )
+@limiter.limit(seats_limit)
 async def bulk_create_seats(
+    request: Request,
     hall_id: int,
     data: SeatBulkCreate,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -62,7 +69,9 @@ async def bulk_create_seats(
 
 
 @router.delete("/{seat_id}", status_code=status.HTTP_204_NO_CONTENT)
+@limiter.limit(seats_limit)
 async def delete_seat(
+    request: Request,
     hall_id: int,
     seat_id: int,
     db: Annotated[AsyncSession, Depends(get_db)],

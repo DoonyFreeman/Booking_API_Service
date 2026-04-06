@@ -1,10 +1,11 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.exceptions import UnauthorizedError
+from app.limiter import auth_limit, limiter
 from app.schemas import (
     LoginRequest,
     RegisterRequest,
@@ -21,7 +22,9 @@ router = APIRouter(prefix="/auth", tags=["auth"])
     response_model=RegisterResponse,
     status_code=status.HTTP_201_CREATED,
 )
+@limiter.limit(auth_limit)
 async def signup(
+    request: Request,
     data: RegisterRequest,
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> RegisterResponse:
@@ -37,7 +40,9 @@ async def signup(
 
 
 @router.post("/login", response_model=TokenResponse)
+@limiter.limit(auth_limit)
 async def login(
+    request: Request,
     data: LoginRequest,
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> TokenResponse:

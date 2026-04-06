@@ -1,10 +1,11 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import AdminUser, CurrentUser
 from app.db import get_db
+from app.limiter import limiter, users_limit
 from app.schemas import PaginatedResponse, PaginationParams, UserResponse, UserUpdate
 from app.services import user_service
 
@@ -12,14 +13,18 @@ router = APIRouter(prefix="/users", tags=["users"])
 
 
 @router.get("/me", response_model=UserResponse)
+@limiter.limit(users_limit)
 async def get_current_user_profile(
+    request: Request,
     current_user: CurrentUser,
 ) -> UserResponse:
     return UserResponse.model_validate(current_user)
 
 
 @router.get("/", response_model=PaginatedResponse[UserResponse])
+@limiter.limit(users_limit)
 async def list_users(
+    request: Request,
     pagination: Annotated[PaginationParams, Depends()],
     db: Annotated[AsyncSession, Depends(get_db)],
     admin: AdminUser,
@@ -39,7 +44,9 @@ async def list_users(
 
 
 @router.get("/{user_id}", response_model=UserResponse)
+@limiter.limit(users_limit)
 async def get_user(
+    request: Request,
     user_id: int,
     db: Annotated[AsyncSession, Depends(get_db)],
     admin: AdminUser,
@@ -53,7 +60,9 @@ async def get_user(
 
 
 @router.patch("/{user_id}", response_model=UserResponse)
+@limiter.limit(users_limit)
 async def update_user(
+    request: Request,
     user_id: int,
     data: UserUpdate,
     db: Annotated[AsyncSession, Depends(get_db)],

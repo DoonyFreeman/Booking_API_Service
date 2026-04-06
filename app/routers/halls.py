@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Request, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -8,6 +8,7 @@ from sqlalchemy.orm import selectinload
 from app.core.dependencies import AdminUser, CurrentUser
 from app.db import get_db
 from app.exceptions import HallNotFoundError
+from app.limiter import halls_limit, limiter
 from app.models import Hall
 from app.schemas import HallCreate, HallResponse, HallUpdate
 
@@ -15,7 +16,9 @@ router = APIRouter(prefix="/halls", tags=["halls"])
 
 
 @router.get("/", response_model=list[HallResponse])
+@limiter.limit(halls_limit)
 async def list_halls(
+    request: Request,
     db: Annotated[AsyncSession, Depends(get_db)],
     current_user: CurrentUser,
 ) -> list[HallResponse]:
@@ -38,7 +41,9 @@ async def list_halls(
 
 
 @router.get("/{hall_id}", response_model=HallResponse)
+@limiter.limit(halls_limit)
 async def get_hall(
+    request: Request,
     hall_id: int,
     db: Annotated[AsyncSession, Depends(get_db)],
     current_user: CurrentUser,
@@ -63,7 +68,9 @@ async def get_hall(
     response_model=HallResponse,
     status_code=status.HTTP_201_CREATED,
 )
+@limiter.limit(halls_limit)
 async def create_hall(
+    request: Request,
     data: HallCreate,
     db: Annotated[AsyncSession, Depends(get_db)],
     admin: AdminUser,
@@ -83,7 +90,9 @@ async def create_hall(
 
 
 @router.patch("/{hall_id}", response_model=HallResponse)
+@limiter.limit(halls_limit)
 async def update_hall(
+    request: Request,
     hall_id: int,
     data: HallUpdate,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -112,7 +121,9 @@ async def update_hall(
 
 
 @router.delete("/{hall_id}", status_code=status.HTTP_204_NO_CONTENT)
+@limiter.limit(halls_limit)
 async def delete_hall(
+    request: Request,
     hall_id: int,
     db: Annotated[AsyncSession, Depends(get_db)],
     admin: AdminUser,
