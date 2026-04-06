@@ -6,6 +6,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     libpq-dev \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy pyproject.toml first for better caching
@@ -41,6 +42,13 @@ COPY alembic.ini .
 
 # Expose port
 EXPOSE 8000
+
+# Set stop signal for graceful shutdown
+STOPSIGNAL SIGTERM
+
+# Health check for container
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
 
 # Run the application
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
