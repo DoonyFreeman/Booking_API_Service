@@ -589,6 +589,7 @@ environment:
 - [x] У1: Rate Limiting (slowapi)
 - [x] У2: Тесты (59% → 69%)
 - [x] У3: Graceful Shutdown
+- [x] У4: OpenAPI аннотации
 
 Подробный план: см. `DEVELOPMENT_PLAN.md`
 

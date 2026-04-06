@@ -678,3 +678,12 @@ curl -X POST http://localhost:8000/api/v1/bookings/ \
 | 1 | Добавить STOPSIGNAL в Dockerfile | SIGTERM | `d2931cc` |
 | 2 | Добавить HEALTHCHECK | curl /health | `d2931cc` |
 | 3 | Добавить stop_grace_period | 10s | `d2931cc` |
+
+### Этап У4: OpenAPI аннотации ✅ ЗАВЕРШЁН
+| # | Задача | Решение | Коммит |
+|---|--------|---------|--------|
+| 1 | Добавить summary/description в auth | /signup, /login | `2637b95` |
+| 2 | Добавить summary/description в users | CRUD endpoints | `2637b95` |
+| 3 | Добавить summary/description в halls | CRUD endpoints | `2637b95` |
+| 4 | Добавить summary/description в seats | CRUD endpoints | `2637b95` |
+| 5 | Добавить summary/description в bookings | CRUD + availability | `2637b95` |

@@ -220,11 +220,11 @@ uvicorn app.main:app --log-level debug
 - [x] Обновить docker-compose.yml (stop_grace_period, healthcheck)
 
 ### OpenAPI аннотации
-- [ ] Добавить summary/description к auth endpoints
-- [ ] Добавить summary/description к users endpoints
-- [ ] Добавить summary/description к halls endpoints
-- [ ] Добавить summary/description к seats endpoints
-- [ ] Добавить summary/description к bookings endpoints
+- [x] Добавить summary/description к auth endpoints
+- [x] Добавить summary/description к users endpoints
+- [x] Добавить summary/description к halls endpoints
+- [x] Добавить summary/description к seats endpoints
+- [x] Добавить summary/description к bookings endpoints
 
 ### Логирование
 - [ ] Добавить request logging middleware
