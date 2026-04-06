@@ -1,4 +1,5 @@
 from collections.abc import AsyncGenerator
+from decimal import Decimal
 from typing import Any
 from unittest.mock import AsyncMock, patch
 
@@ -9,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from sqlalchemy.pool import StaticPool
 
 from app.db import Base, get_db
-from app.models import User
+from app.models import Hall, Seat, User
 from app.models.enums import UserRole
 from app.redis import get_redis
 
@@ -75,6 +76,18 @@ async def db_session() -> AsyncGenerator[AsyncSession, None]:
 
 
 @pytest.fixture
+def mock_kafka() -> None:
+    with patch("app.kafka.send_booking_event", new_callable=AsyncMock):
+        yield
+
+
+@pytest.fixture(autouse=True)
+def auto_mock_kafka() -> None:
+    with patch("app.kafka.send_booking_event", new_callable=AsyncMock):
+        yield
+
+
+@pytest.fixture
 async def client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
     app = create_app()
 
@@ -89,14 +102,15 @@ async def client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
 
     with patch("app.kafka.init_kafka", new_callable=AsyncMock):
         with patch("app.kafka.close_kafka", new_callable=AsyncMock):
-            with patch("app.redis.init_redis", new_callable=AsyncMock):
-                with patch("app.redis.close_redis", new_callable=AsyncMock):
-                    transport = ASGITransport(app=app)
-                    async with AsyncClient(
-                        transport=transport,
-                        base_url="http://test",
-                    ) as ac:
-                        yield ac
+            with patch("app.kafka.send_booking_event", new_callable=AsyncMock):
+                with patch("app.redis.init_redis", new_callable=AsyncMock):
+                    with patch("app.redis.close_redis", new_callable=AsyncMock):
+                        transport = ASGITransport(app=app)
+                        async with AsyncClient(
+                            transport=transport,
+                            base_url="http://test",
+                        ) as ac:
+                            yield ac
 
 
 @pytest.fixture
@@ -198,6 +212,67 @@ async def test_seat(
     )
     assert response.status_code == 201
     return response.json()
+
+
+@pytest.fixture
+async def test_user(db_session: AsyncSession) -> User:
+    user = User(
+        email="testuser@test.com",
+        hashed_password="hashed_password",
+        role=UserRole.user,
+        is_active=True,
+    )
+    db_session.add(user)
+    await db_session.flush()
+    await db_session.refresh(user)
+    return user
+
+
+@pytest.fixture
+async def test_admin(db_session: AsyncSession) -> User:
+    admin = User(
+        email="testadmin@test.com",
+        hashed_password="hashed_password",
+        role=UserRole.admin,
+        is_active=True,
+    )
+    db_session.add(admin)
+    await db_session.flush()
+    await db_session.refresh(admin)
+    return admin
+
+
+@pytest.fixture
+async def test_hall_db(db_session: AsyncSession) -> Hall:
+    hall = Hall(
+        name="Test Hall DB",
+        capacity=50,
+        hourly_rate=Decimal("100.00"),
+        is_active=True,
+    )
+    db_session.add(hall)
+    await db_session.flush()
+    await db_session.refresh(hall)
+    return hall
+
+
+@pytest.fixture
+async def test_seat_db(db_session: AsyncSession, test_hall_db: Hall) -> Seat:
+    seat = Seat(
+        hall_id=test_hall_db.id,
+        row=1,
+        number=1,
+        is_active=True,
+    )
+    db_session.add(seat)
+    await db_session.flush()
+    await db_session.refresh(seat)
+    return seat
+
+
+@pytest.fixture
+def fake_redis() -> FakeRedis:
+    return FakeRedis()
 
 
 def create_app():
