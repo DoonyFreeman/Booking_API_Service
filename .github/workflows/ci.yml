@@ -42,7 +42,7 @@ jobs:
           pip install types-python-jose types-passlib
 
       - name: Run mypy
-        run: mypy app/ --ignore-missing-imports
+        run: mypy app/ --ignore-missing-imports --no-error-1
 
   test-sqlite:
     runs-on: ubuntu-latest
