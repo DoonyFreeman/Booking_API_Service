@@ -29,7 +29,7 @@ async def create_admin(email: str, password: str) -> None:
         await db.commit()
         await db.refresh(user)
 
-        print(f"Admin created successfully!")
+        print("Admin created successfully!")
         print(f"Email: {email}")
         print(f"Role: {user.role.value}")
 

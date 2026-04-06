@@ -38,7 +38,7 @@ async def signup(
         )
         return RegisterResponse.model_validate(user)
     except ValueError as e:
-        raise UnauthorizedError(str(e))
+        raise UnauthorizedError(str(e)) from None
 
 
 @router.post(
@@ -64,4 +64,4 @@ async def login(
     except UnauthorizedError:
         raise
     except Exception:
-        raise UnauthorizedError("Invalid email or password")
+        raise UnauthorizedError("Invalid email or password") from None

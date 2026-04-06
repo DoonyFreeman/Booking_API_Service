@@ -28,32 +28,32 @@ def get_token_from_header(
 
 
 async def get_current_user(
-    token: str = Depends(get_token_from_header),
-    db: AsyncSession = Depends(get_db),
+    token: Annotated[str, Depends(get_token_from_header)],
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> User:
     try:
         payload = decode_access_token(token)
     except ValueError:
-        raise UnauthorizedError("Invalid or expired token")
+        raise UnauthorizedError("Invalid or expired token") from None
 
     user_id = payload.get("sub")
     if user_id is None:
-        raise UnauthorizedError("Invalid token payload")
+        raise UnauthorizedError("Invalid token payload") from None
 
     result = await db.execute(select(User).where(User.id == int(user_id)))
     user = result.scalar_one_or_none()
 
     if user is None:
-        raise UnauthorizedError("User not found")
+        raise UnauthorizedError("User not found") from None
 
     if not user.is_active:
-        raise UnauthorizedError("User is inactive")
+        raise UnauthorizedError("User is inactive") from None
 
     return user
 
 
 async def get_current_admin(
-    current_user: User = Depends(get_current_user),
+    current_user: Annotated[User, Depends(get_current_user)],
 ) -> User:
     if current_user.role != UserRole.admin:
         raise HTTPException(

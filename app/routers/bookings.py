@@ -84,7 +84,7 @@ async def create_booking(
     data: BookingCreate,
     current_user: CurrentUser,
     db: Annotated[..., Depends(get_db)],
-    redis_client: redis.Redis = Depends(get_redis),
+    redis_client: Annotated[redis.Redis, Depends(get_redis)],
 ) -> BookingResponse:
     booking = await booking_service.create_booking(
         db=db,
@@ -131,7 +131,7 @@ async def get_availability(
     date: date,
     current_user: CurrentUser,
     db: Annotated[..., Depends(get_db)],
-    redis_client: redis.Redis = Depends(get_redis),
+    redis_client: Annotated[redis.Redis, Depends(get_redis)],
 ) -> list[TimeSlotResponse]:
     slots = await booking_service.get_available_slots(
         db=db,

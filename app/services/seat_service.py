@@ -32,7 +32,7 @@ async def create_seat(
         return seat
     except IntegrityError:
         await db.rollback()
-        raise SeatAlreadyExistsError(f"Seat {row}-{number} already exists")
+        raise SeatAlreadyExistsError(f"Seat {row}-{number} already exists") from None
 
 
 async def bulk_create_seats(
@@ -55,7 +55,7 @@ async def bulk_create_seats(
         return seats
     except IntegrityError:
         await db.rollback()
-        raise SeatAlreadyExistsError("Some seats already exist")
+        raise SeatAlreadyExistsError("Some seats already exist") from None
 
 
 async def delete_seat(db: AsyncSession, hall_id: int, seat_id: int) -> None:

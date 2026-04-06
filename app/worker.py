@@ -59,7 +59,9 @@ async def wait_for_kafka() -> AIOKafkaConsumer:
                 await asyncio.sleep(RETRY_DELAY)
             else:
                 await consumer.stop()
-                raise RuntimeError("Failed to connect to Kafka after maximum retries")
+                raise RuntimeError(
+                    "Failed to connect to Kafka after maximum retries"
+                ) from None
 
     raise RuntimeError("Should not reach here")
 
