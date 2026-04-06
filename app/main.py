@@ -90,6 +90,25 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
+    @app.middleware("http")
+    async def log_requests(request: Request, call_next):
+        start_time = None
+        if logger.level <= 10:
+            start_time = asyncio.get_event_loop().time()
+
+        logger.info(f"Incoming: {request.method} {request.url.path}")
+        response = await call_next(request)
+
+        status_text = "OK" if response.status_code < 400 else "ERROR"
+        log_msg = f"Response: {request.method} {request.url.path} - {response.status_code} {status_text}"
+
+        if start_time and logger.level <= 10:
+            duration = asyncio.get_event_loop().time() - start_time
+            log_msg += f" ({duration:.3f}s)"
+
+        logger.info(log_msg)
+        return response
+
     app.include_router(auth.router, prefix="/api/v1")
     app.include_router(users.router, prefix="/api/v1")
     app.include_router(halls.router, prefix="/api/v1")
