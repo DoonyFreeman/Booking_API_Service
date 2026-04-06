@@ -585,6 +585,9 @@ environment:
 - [x] Р5: Performance оптимизация
 - [x] Р6: Очистка
 
+### Улучшения для мидл-позиции
+- [x] У1: Rate Limiting (slowapi)
+
 Подробный план: см. `DEVELOPMENT_PLAN.md`
 
 ---
