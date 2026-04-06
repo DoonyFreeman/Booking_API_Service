@@ -660,4 +660,14 @@ curl -X POST http://localhost:8000/api/v1/bookings/ \
 | 1 | Добавить rate limiting | slowapi + in-memory storage | `73cd662` |
 | 2 | Настроить лимиты по группам | auth 5/min, bookings 10/min, etc. | `73cd662` |
 | 3 | Кастомный 429 handler | JSONResponse с message | `73cd662` |
-| 4 | Тесты | 30/30 прошли | `73cd662`
+| 4 | Тесты | 30/30 прошли | `73cd662` |
+
+### Этап У2: Тесты (59% → 70%+) ✅ ЗАВЕРШЁН
+| # | Задача | Решение | Коммит |
+|---|--------|---------|--------|
+| 1 | Создать test_auth_service.py | 7 тестов | `55445ae` |
+| 2 | Создать test_booking_service.py | 16 тестов | `55445ae` |
+| 3 | Создать test_seat_service.py | 8 тестов | `55445ae` |
+| 4 | Создать test_user_service.py | 6 тестов | `55445ae` |
+| 5 | Добавить fixtures в conftest | test_user, admin, hall, seat | `55445ae` |
+| 6 | Покрытие | 59% -> 69% | `55445ae` |

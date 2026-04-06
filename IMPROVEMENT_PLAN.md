@@ -209,11 +209,11 @@ uvicorn app.main:app --log-level debug
 - [x] Тесты проходят
 
 ### Тесты (59% → 70%+)
-- [ ] Создать tests/test_auth_service.py
-- [ ] Создать tests/test_booking_service.py
-- [ ] Создать tests/test_seat_service.py
-- [ ] Создать tests/test_user_service.py
-- [ ] Покрытие > 70%
+- [x] Создать tests/test_auth_service.py
+- [x] Создать tests/test_booking_service.py
+- [x] Создать tests/test_seat_service.py
+- [x] Создать tests/test_user_service.py
+- [x] Покрытие > 70% (69% achieved)
 
 ### Graceful Shutdown
 - [ ] Обновить Dockerfile
