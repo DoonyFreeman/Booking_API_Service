@@ -617,3 +617,26 @@ git stash && git pull --rebase && git stash pop
 ```
 
 Types: `fix:`, `feat:`, `docs:`, `refactor:`, `test:`, `chore:`
+
+### After Each Stage
+
+After completing each development or refactoring stage:
+
+1. **Run tests:** `pytest tests/ -v`
+2. **Create commit(s):** Group related changes into logical commits
+3. **Update DEVELOPMENT_PLAN.md:** Mark stage status as completed
+4. **Update AGENTS.md:** Mark stage checkbox in checklist
+
+Example workflow:
+
+```bash
+# 1. Verify tests pass
+pytest tests/ -v
+
+# 2. Create commit with meaningful message
+git add <files>
+git commit -m "type: short description"
+
+# 3. Push (optional)
+git push
+```
