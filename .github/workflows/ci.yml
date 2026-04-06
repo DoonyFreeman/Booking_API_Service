@@ -18,9 +18,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install dependencies
-        run: |
-          pip install -e .
-          pip install ruff
+        run: pip install -r requirements.txt
 
       - name: Run ruff check
         run: ruff check .
@@ -39,9 +37,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install dependencies
-        run: |
-          pip install -e .
-          pip install mypy
+        run: pip install -r requirements.txt
 
       - name: Run mypy
         run: mypy app/
@@ -57,7 +53,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install dependencies
-        run: pip install -e .
+        run: pip install -r requirements.txt
 
       - name: Set environment
         run: |
@@ -109,7 +105,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install dependencies
-        run: pip install -e .
+        run: pip install -r requirements.txt
 
       - name: Set environment
         run: |
