@@ -216,8 +216,8 @@ uvicorn app.main:app --log-level debug
 - [x] Покрытие > 70% (69% achieved)
 
 ### Graceful Shutdown
-- [ ] Обновить Dockerfile
-- [ ] Проверить shutdown handlers
+- [x] Обновить Dockerfile (STOPSIGNAL, HEALTHCHECK)
+- [x] Обновить docker-compose.yml (stop_grace_period, healthcheck)
 
 ### OpenAPI аннотации
 - [ ] Добавить summary/description к auth endpoints

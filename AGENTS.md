@@ -588,6 +588,7 @@ environment:
 ### Улучшения для мидл-позиции
 - [x] У1: Rate Limiting (slowapi)
 - [x] У2: Тесты (59% → 69%)
+- [x] У3: Graceful Shutdown
 
 Подробный план: см. `DEVELOPMENT_PLAN.md`
 

@@ -671,3 +671,10 @@ curl -X POST http://localhost:8000/api/v1/bookings/ \
 | 4 | Создать test_user_service.py | 6 тестов | `55445ae` |
 | 5 | Добавить fixtures в conftest | test_user, admin, hall, seat | `55445ae` |
 | 6 | Покрытие | 59% -> 69% | `55445ae` |
+
+### Этап У3: Graceful Shutdown ✅ ЗАВЕРШЁН
+| # | Задача | Решение | Коммит |
+|---|--------|---------|--------|
+| 1 | Добавить STOPSIGNAL в Dockerfile | SIGTERM | `d2931cc` |
+| 2 | Добавить HEALTHCHECK | curl /health | `d2931cc` |
+| 3 | Добавить stop_grace_period | 10s | `d2931cc` |
