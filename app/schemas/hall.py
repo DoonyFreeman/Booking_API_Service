@@ -1,6 +1,5 @@
 from datetime import datetime
 from decimal import Decimal
-from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -12,10 +11,10 @@ class HallCreate(BaseModel):
 
 
 class HallUpdate(BaseModel):
-    name: Optional[str] = Field(None, min_length=1, max_length=100)
-    capacity: Optional[int] = Field(None, gt=0)
-    hourly_rate: Optional[Decimal] = Field(None, gt=0)
-    is_active: Optional[bool] = None
+    name: str | None = Field(None, min_length=1, max_length=100)
+    capacity: int | None = Field(None, gt=0)
+    hourly_rate: Decimal | None = Field(None, gt=0)
+    is_active: bool | None = None
 
 
 class HallResponse(BaseModel):

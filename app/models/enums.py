@@ -1,11 +1,11 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class UserRole(str, Enum):
+class UserRole(StrEnum):
     user = "user"
     admin = "admin"
 
 
-class BookingStatus(str, Enum):
+class BookingStatus(StrEnum):
     confirmed = "confirmed"
     cancelled = "cancelled"

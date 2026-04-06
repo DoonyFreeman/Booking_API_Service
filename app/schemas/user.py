@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
@@ -13,9 +12,9 @@ class UserCreate(BaseModel):
 
 
 class UserUpdate(BaseModel):
-    email: Optional[EmailStr] = None
-    is_active: Optional[bool] = None
-    role: Optional[UserRole] = None
+    email: EmailStr | None = None
+    is_active: bool | None = None
+    role: UserRole | None = None
 
 
 class UserResponse(BaseModel):

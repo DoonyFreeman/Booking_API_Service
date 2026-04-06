@@ -692,3 +692,13 @@ curl -X POST http://localhost:8000/api/v1/bookings/ \
 | # | Задача | Решение | Коммит |
 |---|--------|---------|--------|
 | 1 | Добавить logging middleware | Логирование запросов | `22393e5` |
+
+### Дополнительно: Ruff warnings ✅ ЗАВЕРШЁН
+| # | Задача | Решение | Коммит |
+|---|--------|---------|--------|
+| 1 | UP042: StrEnum enums | `class UserRole(StrEnum)` | - |
+| 2 | UP045: Optional -> X \| None | hall.py, user.py | - |
+| 3 | UP046: Generic[T] type params | `class PaginatedResponse[T]` | - |
+| 4 | UP007: Union -> X \| Y | alembic migration | - |
+| 5 | I001: Import sorting | security.py | - |
+| 6 | Тесты | 70 passed ✅ | - |
