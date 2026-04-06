@@ -15,7 +15,12 @@ from app.schemas import HallCreate, HallResponse, HallUpdate
 router = APIRouter(prefix="/halls", tags=["halls"])
 
 
-@router.get("/", response_model=list[HallResponse])
+@router.get(
+    "/",
+    response_model=list[HallResponse],
+    summary="Список залов",
+    description="Возвращает список всех активных кинозалов с информацией о количестве мест.",
+)
 @limiter.limit(halls_limit)
 async def list_halls(
     request: Request,
@@ -40,7 +45,12 @@ async def list_halls(
     return response
 
 
-@router.get("/{hall_id}", response_model=HallResponse)
+@router.get(
+    "/{hall_id}",
+    response_model=HallResponse,
+    summary="Получить зал по ID",
+    description="Возвращает информацию о конкретном кинозале, включая общее количество мест.",
+)
 @limiter.limit(halls_limit)
 async def get_hall(
     request: Request,
@@ -67,6 +77,8 @@ async def get_hall(
     "/",
     response_model=HallResponse,
     status_code=status.HTTP_201_CREATED,
+    summary="Создать новый зал",
+    description="Создает новый кинозал с указанными параметрами (название, вместимость, почасовая ставка). Требует права администратора.",
 )
 @limiter.limit(halls_limit)
 async def create_hall(
@@ -89,7 +101,12 @@ async def create_hall(
     return HallResponse.model_validate(hall)
 
 
-@router.patch("/{hall_id}", response_model=HallResponse)
+@router.patch(
+    "/{hall_id}",
+    response_model=HallResponse,
+    summary="Обновить зал",
+    description="Обновляет информацию о кинозале (название, вместимость, ставка). Требует права администратора.",
+)
 @limiter.limit(halls_limit)
 async def update_hall(
     request: Request,
@@ -120,7 +137,12 @@ async def update_hall(
     return response
 
 
-@router.delete("/{hall_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{hall_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Удалить зал",
+    description="Деактивирует кинозал (мягкое удаление). Все связанные места также деактивируются. Требует права администратора.",
+)
 @limiter.limit(halls_limit)
 async def delete_hall(
     request: Request,

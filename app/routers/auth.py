@@ -21,6 +21,8 @@ router = APIRouter(prefix="/auth", tags=["auth"])
     "/signup",
     response_model=RegisterResponse,
     status_code=status.HTTP_201_CREATED,
+    summary="Регистрация нового пользователя",
+    description="Создает новую учетную запись пользователя с указанным email и паролем. Пароль должен быть не менее 8 символов.",
 )
 @limiter.limit(auth_limit)
 async def signup(
@@ -39,7 +41,12 @@ async def signup(
         raise UnauthorizedError(str(e))
 
 
-@router.post("/login", response_model=TokenResponse)
+@router.post(
+    "/login",
+    response_model=TokenResponse,
+    summary="Вход в систему",
+    description="Аутентифицирует пользователя по email и паролю и возвращает JWT токен для авторизации.",
+)
 @limiter.limit(auth_limit)
 async def login(
     request: Request,

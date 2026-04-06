@@ -20,7 +20,12 @@ from app.services import booking_service
 router = APIRouter(prefix="/bookings", tags=["bookings"])
 
 
-@router.get("/", response_model=PaginatedResponse[BookingResponse])
+@router.get(
+    "/",
+    response_model=PaginatedResponse[BookingResponse],
+    summary="Список бронирований",
+    description="Возвращает список бронирований текущего пользователя с пагинацией.",
+)
 @limiter.limit(bookings_limit)
 async def list_bookings(
     request: Request,
@@ -45,7 +50,12 @@ async def list_bookings(
     )
 
 
-@router.get("/{booking_id}", response_model=BookingResponse)
+@router.get(
+    "/{booking_id}",
+    response_model=BookingResponse,
+    summary="Получить бронирование",
+    description="Возвращает детали конкретного бронирования по ID. Доступно только владельцу бронирования.",
+)
 @limiter.limit(bookings_limit)
 async def get_booking(
     request: Request,
@@ -65,6 +75,8 @@ async def get_booking(
     "/",
     response_model=BookingResponse,
     status_code=status.HTTP_201_CREATED,
+    summary="Создать бронирование",
+    description="Создает новое бронирование для указанных мест и времени. Время бронирования должно быть кратно часу, минимальная длительность - 1 час, максимальная - 8 часов.",
 )
 @limiter.limit(bookings_limit)
 async def create_booking(
@@ -86,7 +98,12 @@ async def create_booking(
     return await booking_service.build_booking_response(db, booking)
 
 
-@router.delete("/{booking_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{booking_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Отменить бронирование",
+    description="Отменяет бронирование (мягкое удаление). Доступно только владельцу бронирования.",
+)
 @limiter.limit(bookings_limit)
 async def cancel_booking(
     request: Request,
@@ -104,6 +121,8 @@ async def cancel_booking(
 @router.get(
     "/halls/{hall_id}/availability",
     response_model=list[TimeSlotResponse],
+    summary="Доступные временные слоты",
+    description="Возвращает список доступных временных слотов для бронирования в указанном зале на указанную дату.",
 )
 @limiter.limit(bookings_limit)
 async def get_availability(

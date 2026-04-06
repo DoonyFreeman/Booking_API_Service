@@ -12,7 +12,12 @@ from app.services import user_service
 router = APIRouter(prefix="/users", tags=["users"])
 
 
-@router.get("/me", response_model=UserResponse)
+@router.get(
+    "/me",
+    response_model=UserResponse,
+    summary="Получить профиль текущего пользователя",
+    description="Возвращает данные авторизованного пользователя. Требует JWT токен.",
+)
 @limiter.limit(users_limit)
 async def get_current_user_profile(
     request: Request,
@@ -21,7 +26,12 @@ async def get_current_user_profile(
     return UserResponse.model_validate(current_user)
 
 
-@router.get("/", response_model=PaginatedResponse[UserResponse])
+@router.get(
+    "/",
+    response_model=PaginatedResponse[UserResponse],
+    summary="Список пользователей",
+    description="Возвращает список всех пользователей с пагинацией. Требует права администратора.",
+)
 @limiter.limit(users_limit)
 async def list_users(
     request: Request,
@@ -43,7 +53,12 @@ async def list_users(
     )
 
 
-@router.get("/{user_id}", response_model=UserResponse)
+@router.get(
+    "/{user_id}",
+    response_model=UserResponse,
+    summary="Получить пользователя по ID",
+    description="Возвращает данные пользователя по его идентификатору. Требует права администратора.",
+)
 @limiter.limit(users_limit)
 async def get_user(
     request: Request,
@@ -59,7 +74,12 @@ async def get_user(
     return UserResponse.model_validate(user)
 
 
-@router.patch("/{user_id}", response_model=UserResponse)
+@router.patch(
+    "/{user_id}",
+    response_model=UserResponse,
+    summary="Обновить пользователя",
+    description="Обновляет данные пользователя по его ID (email, role, is_active). Требует права администратора.",
+)
 @limiter.limit(users_limit)
 async def update_user(
     request: Request,

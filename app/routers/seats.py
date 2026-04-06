@@ -12,7 +12,12 @@ from app.services import seat_service
 router = APIRouter(prefix="/halls/{hall_id}/seats", tags=["seats"])
 
 
-@router.get("/", response_model=list[SeatResponse])
+@router.get(
+    "/",
+    response_model=list[SeatResponse],
+    summary="Список мест в зале",
+    description="Возвращает список всех активных мест в указанном кинозале.",
+)
 @limiter.limit(seats_limit)
 async def list_seats(
     request: Request,
@@ -28,6 +33,8 @@ async def list_seats(
     "/",
     response_model=SeatResponse,
     status_code=status.HTTP_201_CREATED,
+    summary="Создать место",
+    description="Создает новое место в указанном кинозале. Требует права администратора.",
 )
 @limiter.limit(seats_limit)
 async def create_seat(
@@ -50,6 +57,8 @@ async def create_seat(
     "/bulk",
     response_model=list[SeatResponse],
     status_code=status.HTTP_201_CREATED,
+    summary="Массовое создание мест",
+    description="Создает несколько мест в кинозале (сетка мест). Требует права администратора.",
 )
 @limiter.limit(seats_limit)
 async def bulk_create_seats(
@@ -68,7 +77,12 @@ async def bulk_create_seats(
     return [SeatResponse.model_validate(s) for s in seats]
 
 
-@router.delete("/{seat_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{seat_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Удалить место",
+    description="Деактивирует место в кинозале (мягкое удаление). Требует права администратора.",
+)
 @limiter.limit(seats_limit)
 async def delete_seat(
     request: Request,
