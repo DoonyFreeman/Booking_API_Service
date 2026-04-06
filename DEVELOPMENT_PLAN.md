@@ -687,3 +687,8 @@ curl -X POST http://localhost:8000/api/v1/bookings/ \
 | 3 | Добавить summary/description в halls | CRUD endpoints | `2637b95` |
 | 4 | Добавить summary/description в seats | CRUD endpoints | `2637b95` |
 | 5 | Добавить summary/description в bookings | CRUD + availability | `2637b95` |
+
+### Этап У5: Логирование запросов ✅ ЗАВЕРШЁН
+| # | Задача | Решение | Коммит |
+|---|--------|---------|--------|
+| 1 | Добавить logging middleware | Логирование запросов | `22393e5` |

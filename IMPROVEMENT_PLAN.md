@@ -227,7 +227,7 @@ uvicorn app.main:app --log-level debug
 - [x] Добавить summary/description к bookings endpoints
 
 ### Логирование
-- [ ] Добавить request logging middleware
+- [x] Добавить request logging middleware
 
 ---
 

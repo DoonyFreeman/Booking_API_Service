@@ -590,6 +590,7 @@ environment:
 - [x] У2: Тесты (59% → 69%)
 - [x] У3: Graceful Shutdown
 - [x] У4: OpenAPI аннотации
+- [x] У5: Логирование запросов
 
 Подробный план: см. `DEVELOPMENT_PLAN.md`
 
