@@ -1,4 +1,5 @@
 from datetime import UTC, datetime, timedelta
+from typing import Any
 
 from jose import JWTError, jwt
 from passlib.context import CryptContext
@@ -9,18 +10,18 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+    return str(pwd_context.hash(password))
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
+    return bool(pwd_context.verify(plain_password, hashed_password))
 
 
 def create_access_token(data: dict) -> str:
     to_encode = data.copy()
     expire = datetime.now(UTC) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(
+    encoded_jwt: str = jwt.encode(
         to_encode,
         settings.JWT_SECRET_KEY,
         algorithm=settings.JWT_ALGORITHM,
@@ -28,9 +29,9 @@ def create_access_token(data: dict) -> str:
     return encoded_jwt
 
 
-def decode_access_token(token: str) -> dict:
+def decode_access_token(token: str) -> dict[str, Any]:
     try:
-        payload = jwt.decode(
+        payload: dict[str, Any] = jwt.decode(
             token,
             settings.JWT_SECRET_KEY,
             algorithms=[settings.JWT_ALGORITHM],

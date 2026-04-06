@@ -3,6 +3,7 @@ from typing import Annotated
 
 import redis.asyncio as redis
 from fastapi import APIRouter, Depends, Request, status
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import CurrentUser
 from app.db import get_db
@@ -12,6 +13,7 @@ from app.schemas import (
     BookingCreate,
     BookingResponse,
     PaginatedResponse,
+    PaginationParams,
     TimeSlotResponse,
     pagination_params,
 )
@@ -29,9 +31,9 @@ router = APIRouter(prefix="/bookings", tags=["bookings"])
 @limiter.limit(bookings_limit)
 async def list_bookings(
     request: Request,
-    pagination: Annotated[..., Depends(pagination_params)],
+    pagination: Annotated[PaginationParams, Depends(pagination_params)],
     current_user: CurrentUser,
-    db: Annotated[..., Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> PaginatedResponse[BookingResponse]:
     bookings, total = await booking_service.get_user_bookings(
         db=db,
@@ -61,7 +63,7 @@ async def get_booking(
     request: Request,
     booking_id: int,
     current_user: CurrentUser,
-    db: Annotated[..., Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> BookingResponse:
     booking = await booking_service.get_booking_by_id(
         db=db,
@@ -83,7 +85,7 @@ async def create_booking(
     request: Request,
     data: BookingCreate,
     current_user: CurrentUser,
-    db: Annotated[..., Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_db)],
     redis_client: Annotated[redis.Redis, Depends(get_redis)],
 ) -> BookingResponse:
     booking = await booking_service.create_booking(
@@ -109,7 +111,7 @@ async def cancel_booking(
     request: Request,
     booking_id: int,
     current_user: CurrentUser,
-    db: Annotated[..., Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> None:
     await booking_service.cancel_booking(
         db=db,
@@ -130,7 +132,7 @@ async def get_availability(
     hall_id: int,
     date: date,
     current_user: CurrentUser,
-    db: Annotated[..., Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_db)],
     redis_client: Annotated[redis.Redis, Depends(get_redis)],
 ) -> list[TimeSlotResponse]:
     slots = await booking_service.get_available_slots(

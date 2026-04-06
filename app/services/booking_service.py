@@ -333,7 +333,7 @@ async def get_available_slots(
 
     cached = await redis_client.get(cache_key)
     if cached:
-        return json.loads(cached)
+        return list(json.loads(cached))
 
     slots = await _calculate_slots(db, hall_id, target_date)
 

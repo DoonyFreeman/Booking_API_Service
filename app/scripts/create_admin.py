@@ -37,7 +37,7 @@ async def create_admin(email: str, password: str) -> None:
         print(f"Role: {user.role.value}")
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description="Create admin user")
     parser.add_argument("--email", required=True, help="Admin email")
     parser.add_argument("--password", required=True, help="Admin password")

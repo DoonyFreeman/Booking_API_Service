@@ -15,9 +15,7 @@ async def get_hall_or_raise(db: AsyncSession, hall_id: int) -> Hall:
 
 
 async def get_active_hall_or_raise(db: AsyncSession, hall_id: int) -> Hall:
-    result = await db.execute(
-        select(Hall).where(Hall.id == hall_id, Hall.is_active)
-    )
+    result = await db.execute(select(Hall).where(Hall.id == hall_id, Hall.is_active))
     hall = result.scalar_one_or_none()
     if not hall:
         raise HallNotFoundError("Hall not found or inactive")

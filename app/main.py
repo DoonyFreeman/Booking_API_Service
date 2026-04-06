@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from collections.abc import AsyncGenerator
+from collections.abc import AsyncGenerator, Awaitable, Callable
 from contextlib import asynccontextmanager
 from typing import Annotated, Any
 
@@ -8,7 +8,7 @@ import redis.asyncio as redis
 from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from slowapi.errors import RateLimitExceeded
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -91,7 +91,9 @@ def create_app() -> FastAPI:
     )
 
     @app.middleware("http")
-    async def log_requests(request: Request, call_next):
+    async def log_requests(
+        request: Request, call_next: Callable[[Request], Awaitable[Response]]
+    ) -> Response:
         start_time = None
         if logger.level <= 10:
             start_time = asyncio.get_event_loop().time()
@@ -116,43 +118,59 @@ def create_app() -> FastAPI:
     app.include_router(bookings.router, prefix="/api/v1")
 
     @app.exception_handler(BookingConflictError)
-    async def booking_conflict_handler(request: Request, exc: BookingConflictError):
+    async def booking_conflict_handler(
+        request: Request, exc: BookingConflictError
+    ) -> Response:
         return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
 
     @app.exception_handler(BookingNotFoundError)
-    async def booking_not_found_handler(request: Request, exc: BookingNotFoundError):
+    async def booking_not_found_handler(
+        request: Request, exc: BookingNotFoundError
+    ) -> Response:
         return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
 
     @app.exception_handler(HallNotFoundError)
-    async def hall_not_found_handler(request: Request, exc: HallNotFoundError):
+    async def hall_not_found_handler(
+        request: Request, exc: HallNotFoundError
+    ) -> Response:
         return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
 
     @app.exception_handler(SeatNotFoundError)
-    async def seat_not_found_handler(request: Request, exc: SeatNotFoundError):
+    async def seat_not_found_handler(
+        request: Request, exc: SeatNotFoundError
+    ) -> Response:
         return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
 
     @app.exception_handler(SeatAlreadyExistsError)
-    async def seat_exists_handler(request: Request, exc: SeatAlreadyExistsError):
+    async def seat_exists_handler(
+        request: Request, exc: SeatAlreadyExistsError
+    ) -> Response:
         return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
 
     @app.exception_handler(UserNotFoundError)
-    async def user_not_found_handler(request: Request, exc: UserNotFoundError):
+    async def user_not_found_handler(
+        request: Request, exc: UserNotFoundError
+    ) -> Response:
         return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
 
     @app.exception_handler(InvalidTimeSlotError)
-    async def invalid_slot_handler(request: Request, exc: InvalidTimeSlotError):
+    async def invalid_slot_handler(
+        request: Request, exc: InvalidTimeSlotError
+    ) -> Response:
         return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
 
     @app.exception_handler(UnauthorizedError)
-    async def unauthorized_handler(request: Request, exc: UnauthorizedError):
+    async def unauthorized_handler(
+        request: Request, exc: UnauthorizedError
+    ) -> Response:
         return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
 
     @app.exception_handler(ForbiddenError)
-    async def forbidden_handler(request: Request, exc: ForbiddenError):
+    async def forbidden_handler(request: Request, exc: ForbiddenError) -> Response:
         return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
 
     @app.exception_handler(RateLimitExceeded)
-    async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
+    async def rate_limit_handler(request: Request, exc: RateLimitExceeded) -> Response:
         return JSONResponse(
             status_code=429,
             content={"detail": "Too many requests. Please try again later."},
