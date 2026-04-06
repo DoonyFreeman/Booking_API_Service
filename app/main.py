@@ -203,7 +203,9 @@ async def health_check(
 
     try:
         async with asyncio.timeout(HEALTH_TIMEOUT):
-            await redis_client.ping()
+            result = await redis_client.ping()
+            if not result:
+                raise Exception("Redis ping returned False")
     except TimeoutError:
         checks["redis"] = "timeout"
     except Exception:
