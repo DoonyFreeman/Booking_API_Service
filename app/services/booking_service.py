@@ -96,7 +96,7 @@ async def validate_seats_exist(
         select(Seat).where(
             Seat.id.in_(seat_ids),
             Seat.hall_id == hall_id,
-            Seat.is_active == True,
+            Seat.is_active,
         )
     )
     seats = list(result.scalars().all())
@@ -159,7 +159,7 @@ async def create_booking(
     end_time: datetime,
 ) -> Booking:
     hall_result = await db.execute(
-        select(Hall).where(Hall.id == hall_id, Hall.is_active == True)
+        select(Hall).where(Hall.id == hall_id, Hall.is_active)
     )
     hall = hall_result.scalar_one_or_none()
     if not hall:
@@ -348,14 +348,14 @@ async def _calculate_slots(
     target_date: date,
 ) -> list[dict[str, Any]]:
     hall_result = await db.execute(
-        select(Hall).where(Hall.id == hall_id, Hall.is_active == True)
+        select(Hall).where(Hall.id == hall_id, Hall.is_active)
     )
     hall = hall_result.scalar_one_or_none()
     if not hall:
         raise HallNotFoundError()
 
     seats_result = await db.execute(
-        select(Seat).where(Seat.hall_id == hall_id, Seat.is_active == True)
+        select(Seat).where(Seat.hall_id == hall_id, Seat.is_active)
     )
     total_seats = len(seats_result.scalars().all())
 

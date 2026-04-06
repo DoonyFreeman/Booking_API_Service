@@ -1,4 +1,4 @@
-from typing import Annotated, List
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, status
 from sqlalchemy import select
@@ -14,14 +14,14 @@ from app.schemas import HallCreate, HallResponse, HallUpdate
 router = APIRouter(prefix="/halls", tags=["halls"])
 
 
-@router.get("/", response_model=List[HallResponse])
+@router.get("/", response_model=list[HallResponse])
 async def list_halls(
     db: Annotated[AsyncSession, Depends(get_db)],
     current_user: CurrentUser,
-) -> List[HallResponse]:
+) -> list[HallResponse]:
     result = await db.execute(
         select(Hall)
-        .where(Hall.is_active == True)
+        .where(Hall.is_active)
         .options(selectinload(Hall.seats))
         .order_by(Hall.id)
     )

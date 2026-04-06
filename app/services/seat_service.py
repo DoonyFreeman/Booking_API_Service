@@ -11,7 +11,7 @@ async def list_seats(db: AsyncSession, hall_id: int) -> list[Seat]:
     await get_hall_or_raise(db, hall_id)
     result = await db.execute(
         select(Seat)
-        .where(Seat.hall_id == hall_id, Seat.is_active == True)
+        .where(Seat.hall_id == hall_id, Seat.is_active)
         .order_by(Seat.row, Seat.number)
     )
     return list(result.scalars().all())

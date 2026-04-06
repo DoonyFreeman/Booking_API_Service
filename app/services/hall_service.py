@@ -16,7 +16,7 @@ async def get_hall_or_raise(db: AsyncSession, hall_id: int) -> Hall:
 
 async def get_active_hall_or_raise(db: AsyncSession, hall_id: int) -> Hall:
     result = await db.execute(
-        select(Hall).where(Hall.id == hall_id, Hall.is_active == True)
+        select(Hall).where(Hall.id == hall_id, Hall.is_active)
     )
     hall = result.scalar_one_or_none()
     if not hall:
@@ -37,7 +37,7 @@ async def get_hall_with_seats(db: AsyncSession, hall_id: int) -> Hall:
 async def list_active_halls(db: AsyncSession) -> list[Hall]:
     result = await db.execute(
         select(Hall)
-        .where(Hall.is_active == True)
+        .where(Hall.is_active)
         .options(selectinload(Hall.seats))
         .order_by(Hall.id)
     )

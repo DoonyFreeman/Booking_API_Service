@@ -1,5 +1,5 @@
 from decimal import Decimal
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, Index, Integer, Numeric, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -24,12 +24,12 @@ class Hall(Base, TimestampMixin):
     hourly_rate: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
-    seats: Mapped[List["Seat"]] = relationship(
+    seats: Mapped[list["Seat"]] = relationship(
         "Seat",
         back_populates="hall",
         lazy="selectin",
     )
-    bookings: Mapped[List["Booking"]] = relationship(
+    bookings: Mapped[list["Booking"]] = relationship(
         "Booking",
         back_populates="hall",
         lazy="selectin",

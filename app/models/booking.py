@@ -1,6 +1,6 @@
 from datetime import datetime
 from decimal import Decimal
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, ForeignKey, Index, Numeric, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -54,7 +54,7 @@ class Booking(Base, TimestampMixin):
 
     user: Mapped["User"] = relationship("User", back_populates="bookings")
     hall: Mapped["Hall"] = relationship("Hall", back_populates="bookings")
-    booking_seats: Mapped[List["BookingSeat"]] = relationship(
+    booking_seats: Mapped[list["BookingSeat"]] = relationship(
         "BookingSeat",
         back_populates="booking",
         lazy="selectin",

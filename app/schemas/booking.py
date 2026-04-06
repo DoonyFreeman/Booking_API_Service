@@ -1,6 +1,6 @@
 from datetime import datetime
 from decimal import Decimal
-from typing import List
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -9,7 +9,7 @@ from app.models.enums import BookingStatus
 
 class BookingCreate(BaseModel):
     hall_id: int
-    seat_ids: List[int] = Field(..., min_length=1)
+    seat_ids: list[int] = Field(..., min_length=1)
     start_time: datetime
     end_time: datetime
 
@@ -27,7 +27,7 @@ class BookingResponse(BaseModel):
     user_id: int
     hall_id: int
     hall_name: str
-    seats: List[BookingSeatResponse]
+    seats: list[BookingSeatResponse]
     start_time: datetime
     end_time: datetime
     total_price: Decimal
@@ -38,7 +38,7 @@ class BookingResponse(BaseModel):
 
 
 class BookingListResponse(BaseModel):
-    bookings: List[BookingResponse]
+    bookings: list[BookingResponse]
     total: int
 
 

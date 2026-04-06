@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, ForeignKey, Index, Integer, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -33,7 +33,7 @@ class Seat(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
     hall: Mapped["Hall"] = relationship("Hall", back_populates="seats")
-    booking_seats: Mapped[List["BookingSeat"]] = relationship(
+    booking_seats: Mapped[list["BookingSeat"]] = relationship(
         "BookingSeat",
         back_populates="seat",
         lazy="selectin",

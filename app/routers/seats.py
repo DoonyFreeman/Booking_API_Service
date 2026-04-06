@@ -1,4 +1,4 @@
-from typing import Annotated, List
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -11,12 +11,12 @@ from app.services import seat_service
 router = APIRouter(prefix="/halls/{hall_id}/seats", tags=["seats"])
 
 
-@router.get("/", response_model=List[SeatResponse])
+@router.get("/", response_model=list[SeatResponse])
 async def list_seats(
     hall_id: int,
     db: Annotated[AsyncSession, Depends(get_db)],
     current_user: CurrentUser,
-) -> List[SeatResponse]:
+) -> list[SeatResponse]:
     seats = await seat_service.list_seats(db, hall_id)
     return [SeatResponse.model_validate(s) for s in seats]
 
@@ -43,7 +43,7 @@ async def create_seat(
 
 @router.post(
     "/bulk",
-    response_model=List[SeatResponse],
+    response_model=list[SeatResponse],
     status_code=status.HTTP_201_CREATED,
 )
 async def bulk_create_seats(
@@ -51,7 +51,7 @@ async def bulk_create_seats(
     data: SeatBulkCreate,
     db: Annotated[AsyncSession, Depends(get_db)],
     admin: AdminUser,
-) -> List[SeatResponse]:
+) -> list[SeatResponse]:
     seats = await seat_service.bulk_create_seats(
         db=db,
         hall_id=hall_id,

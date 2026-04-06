@@ -583,7 +583,7 @@ environment:
 - [x] Р3: Архитектура (Service Layer)
 - [x] Р4: Качество кода
 - [x] Р5: Performance оптимизация
-- [ ] Р6: Очистка
+- [x] Р6: Очистка
 
 Подробный план: см. `DEVELOPMENT_PLAN.md`
 
