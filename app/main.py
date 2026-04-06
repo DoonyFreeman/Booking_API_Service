@@ -1,14 +1,18 @@
+import asyncio
 import logging
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
+from typing import Annotated, AsyncGenerator
 
-from fastapi import FastAPI, Request
+from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+import redis.asyncio as redis
 
 from app.config import settings
-from app.db import create_tables
+from app.db import create_tables, get_db
 from app.exceptions import (
     BookingConflictError,
     BookingNotFoundError,
@@ -20,8 +24,8 @@ from app.exceptions import (
     UnauthorizedError,
     UserNotFoundError,
 )
-from app.kafka import close_kafka, init_kafka
-from app.redis import close_redis, init_redis
+from app.kafka import close_kafka, init_kafka, kafka_producer
+from app.redis import close_redis, get_redis, init_redis
 from app.routers import auth, bookings, halls, seats, users
 
 logging.basicConfig(
@@ -29,6 +33,8 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
+
+HEALTH_TIMEOUT = 5.0
 
 
 @asynccontextmanager
@@ -127,6 +133,46 @@ def create_app() -> FastAPI:
 app = create_app()
 
 
+DbDep = Annotated[AsyncSession, Depends(get_db)]
+RedisDep = Annotated[redis.Redis, Depends(get_redis)]
+
+
 @app.get("/health")
-async def health_check() -> dict[str, str]:
-    return {"status": "healthy"}
+async def health_check(
+    db: DbDep,
+    redis_client: RedisDep,
+) -> dict[str, str]:
+    checks: dict[str, str] = {"database": "ok", "redis": "ok", "kafka": "ok"}
+
+    try:
+        async with asyncio.timeout(HEALTH_TIMEOUT):
+            await db.execute(select(1))
+    except TimeoutError:
+        checks["database"] = "timeout"
+    except Exception:
+        checks["database"] = "error"
+
+    try:
+        async with asyncio.timeout(HEALTH_TIMEOUT):
+            await redis_client.ping()
+    except TimeoutError:
+        checks["redis"] = "timeout"
+    except Exception:
+        checks["redis"] = "error"
+
+    try:
+        async with asyncio.timeout(HEALTH_TIMEOUT):
+            if kafka_producer is None:
+                checks["kafka"] = "not initialized"
+            else:
+                await kafka_producer.partitions_for(settings.KAFKA_TOPIC_BOOKING_EVENTS)
+    except TimeoutError:
+        checks["kafka"] = "timeout"
+    except Exception:
+        checks["kafka"] = "error"
+
+    all_ok = all(v == "ok" for v in checks.values())
+    return {
+        "status": "healthy" if all_ok else "unhealthy",
+        "checks": checks,
+    }

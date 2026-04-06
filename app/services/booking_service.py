@@ -4,7 +4,7 @@ from decimal import Decimal
 from typing import Any
 
 import redis.asyncio as redis
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -305,8 +305,10 @@ async def get_user_bookings(
 ) -> tuple[list[Booking], int]:
     offset = (page - 1) * page_size
 
-    count_result = await db.execute(select(Booking).where(Booking.user_id == user_id))
-    total = len(count_result.scalars().all())
+    count_result = await db.execute(
+        select(func.count()).select_from(Booking).where(Booking.user_id == user_id)
+    )
+    total = count_result.scalar_one()
 
     result = await db.execute(
         select(Booking)

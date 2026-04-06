@@ -636,12 +636,11 @@ curl -X POST http://localhost:8000/api/v1/bookings/ \
 | 3 | `alembic/`, `app/` | Неправильный порядок импортов | Исправить ruff | `chore` |
 | 4 | `app/redis.py` | Неправильный формат | ruff format | `chore` |
 
-### Этап Р5: Performance оптимизация
-| # | Файл | Проблема | Решение | Статус |
+### Этап Р5: Performance оптимизация ✅ ЗАВЕРШЁН
+| # | Файл | Проблема | Решение | Коммит |
 |---|------|----------|---------|--------|
-| 1 | `app/routers/users.py:30-31` | `COUNT` через `len(all())` | `select(func.count())` | ☐ |
-| 2 | `app/services/booking_service.py:276-277` | То же | То же | ☐ |
-| 3 | `app/main.py` | Health check без проверки зависимостей | Добавить проверки DB/Redis/Kafka | ☐ |
+| 1 | `app/services/booking_service.py` | `COUNT` через `len(all())` | `select(func.count())` | `chore` |
+| 2 | `app/main.py` | Health check без проверки зависимостей | Полный check: DB + Redis + Kafka + таймауты | `chore` |
 
 ### Этап Р6: Очистка
 | # | Задача | Статус |
