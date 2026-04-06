@@ -203,10 +203,10 @@ uvicorn app.main:app --log-level debug
 ## Чеклист выполнения
 
 ### Rate Limiting
-- [ ] Добавить slowapi в зависимости
-- [ ] Настроить limiter в main.py
-- [ ] Применить к роутерам
-- [ ] Тесты проходят
+- [x] Добавить slowapi в зависимости
+- [x] Настроить limiter в main.py
+- [x] Применить к роутерам
+- [x] Тесты проходят
 
 ### Тесты (59% → 70%+)
 - [ ] Создать tests/test_auth_service.py

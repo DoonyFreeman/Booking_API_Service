@@ -649,3 +649,15 @@ curl -X POST http://localhost:8000/api/v1/bookings/ \
 | 2 | Авто-исправления ruff | UP006, UP035, E712 | `chore` |
 | 3 | Docker конфигурация | Проверена | ✅ |
 | 4 | Тесты | 30/30 прошли | ✅ |
+
+---
+
+## Улучшения для мидл-позиции
+
+### Этап У1: Rate Limiting ✅ ЗАВЕРШЁН
+| # | Задача | Решение | Коммит |
+|---|--------|---------|--------|
+| 1 | Добавить rate limiting | slowapi + in-memory storage | `73cd662` |
+| 2 | Настроить лимиты по группам | auth 5/min, bookings 10/min, etc. | `73cd662` |
+| 3 | Кастомный 429 handler | JSONResponse с message | `73cd662` |
+| 4 | Тесты | 30/30 прошли | `73cd662`
