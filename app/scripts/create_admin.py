@@ -15,7 +15,10 @@ async def create_admin(email: str, password: str) -> None:
         existing_user = result.scalar_one_or_none()
 
         if existing_user:
-            print(f"User {email} already exists")
+            existing_user.role = UserRole.admin
+            existing_user.is_active = True
+            await db.commit()
+            print(f"User {email} updated to admin role")
             return
 
         user = User(
