@@ -1,148 +1,251 @@
 # Booking API Service
 
-REST API для бронирования залов кинотеатра с местами.
+![Python](https://img.shields.io/badge/Python-3.12-blue?style=flat&logo=python)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-green?style=flat&logo=fastapi)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue?style=flat&logo=postgresql)
+![Redis](https://img.shields.io/badge/Redis-7-red?style=flat&logo=redis)
+![Docker](https://img.shields.io/badge/Docker-3.7-blue?style=flat&logo=docker)
+![Kafka](https://img.shields.io/badge/Kafka-3.7-black?style=flat)
 
-## На текущий момент
+REST API для бронирования залов кинотеатра. Управление залами, местами, временными слотами и email-уведомлениями через event-driven архитектуру.
 
-### Реализовано
+---
 
-| Компонент | Описание |
-|-----------|---------|
-| Auth | Регистрация, авторизация (JWT) |
-| Users | CRUD пользователей (admin) |
-| Halls | CRUD залов (admin) |
-| Seats | CRUD мест (admin, bulk создание) |
-| Bookings | Создание, отмена, список бронирований |
-| Availability | Проверка доступных слотов (с кешированием) |
-| Kafka Worker | Обработка событий бронирования |
-| Docker | API + Worker в контейнерах |
+## Содержание
 
-### В разработке
+1. [Quick Start](#quick-start)
+2. [Features](#features)
+3. [Tech Stack](#tech-stack)
+4. [Что я изучил](#что-я-изучил)
+5. [Архитектура](#архитектура)
+6. [Тестирование](#тестирование)
+7. [API](#api)
+8. [Конфигурация](#конфигурация)
+9. [Лицензия](#лицензия)
 
-- Тесты (pytest)
+---
 
-## Tech Stack
+## Quick Start
 
-FastAPI • PostgreSQL • Redis • Kafka • JWT • Docker
-
-## Быстрый старт
-
-### Запуск
+Клонируем, запускаем, готово:
 
 ```bash
+# Клонируем репозиторий
+git clone https://github.com/yourusername/booking-api-service.git
+cd booking-api-service
+
+# Запускаем всё
 docker-compose up --build
-```
 
-API будет доступен по адресу: http://localhost:8000/docs
-
-### Создание администратора
-
-```bash
+# Создаём админа (после первого запуска)
 docker exec booking_api python -m app.scripts.create_admin \
   --email admin@test.com \
   --password secret123
 ```
 
-### Тестирование end-to-end
+Документация API доступна по адресу: **http://localhost:8000/docs**
 
-1. Зайдите в Swagger UI: http://localhost:8000/docs
-2. Зарегистрируйтесь или войдите: POST /api/v1/auth/login
-3. Нажмите **Authorize** (🔓) и вставьте токен **БЕЗ** префикса `Bearer `
-4. Создайте зал: POST /api/v1/halls/
-5. Создайте места: POST /api/v1/halls/1/seats/bulk
-6. Создайте бронирование: POST /api/v1/bookings/
-7. Проверьте Kafka: смотрите логи worker или консоль consumer
+---
 
-### Просмотр Kafka сообщений
+## Features
 
-```bash
-docker exec booking_kafka /opt/kafka/bin/kafka-console-consumer.sh \
-  --topic booking-events --from-beginning --bootstrap-server localhost:9092
-```
+| Компонент | Статус | Описание |
+|-----------|--------|----------|
+| Authentication | ✅ | JWT токены + role-based access (user/admin) |
+| Halls CRUD | ✅ | Создание, обновление, удаление залов |
+| Seats CRUD | ✅ | Управление местами + bulk создание |
+| Bookings | ✅ | Создание, отмена, список бронирований |
+| Availability | ✅ | Проверка свободных слотов (кешируется в Redis) |
+| Kafka Worker | ✅ | Обработка событий бронирования |
+| Rate Limiting | ✅ | Лимиты запросов через slowapi |
+| Graceful Shutdown | ✅ | Корректное завершение процессов |
+| Health Checks | ✅ | Проверка состояния сервисов |
+| Alembic Migrations | ✅ | Миграции БД в Docker |
+| Tests | ✅ | 70% покрытие pytest |
 
-### Просмотр логов
+---
 
-```bash
-docker-compose logs -f worker
-docker-compose logs -f api
-```
+## Tech Stack
 
-## API Endpoints
+| Технология | Зачем |
+|------------|-------|
+| **FastAPI** | Асинхронный REST API с auto-docs |
+| **PostgreSQL** | Основная база данных |
+| **Redis** | Кеширование + distributed locks |
+| **Kafka** | Очередь событий для email-уведомлений |
+| **SQLAlchemy** | ORM (async режим) |
+| **JWT** | Аутентификация через токены |
+| **Docker** | Контейнеризация всех сервисов |
 
-| Метод | Путь | Описание |
-|-------|------|----------|
-| POST | /api/v1/auth/signup | Регистрация |
-| POST | /api/v1/auth/login | Вход (JWT) |
-| GET | /api/v1/users/me | Профиль |
-| GET | /api/v1/halls/ | Список залов |
-| POST | /api/v1/halls/ | Создать зал (admin) |
-| GET | /api/v1/halls/{id}/seats/ | Места в зале |
-| POST | /api/v1/halls/{id}/seats/bulk | Bulk создание мест |
-| POST | /api/v1/bookings/ | Создать бронирование |
-| GET | /api/v1/bookings/ | Мои бронирования |
-| GET | /api/v1/bookings/halls/{id}/availability | Доступные слоты |
+---
 
-## Документация API
+## Что я изучил
 
-http://localhost:8000/docs
+В процессе работы над проектом разобрался в следующих темах:
+
+- **Async/await в Python** — работа с async SQLAlchemy, правильная организация асинхронного кода
+- **Distributed locking** — использование Redis для предотвращения race conditions при бронировании
+- **Event-driven архитектура** — Kafka как message broker, обработка событий в отдельном worker
+- **Docker orchestration** — docker-compose, multi-container приложения, healthchecks
+- ** Alembic миграции** — версионирование схемы БД, применение миграций при деплое
+- **Rate limiting** — реализация через slowapi, разные лимиты для разных endpoint групп
+- **Graceful shutdown** — корректная обработка SIGTERM, завершение соединений
+
+---
 
 ## Архитектура
 
+### High-level компоненты
+
 ```mermaid
 graph TB
-    subgraph API Layer
-        R[Router] --> S[Service]
+    subgraph API
+        R[Routes] --> S[Services]
         S --> M[Models]
     end
-
+    
     subgraph Infrastructure
         DB[(PostgreSQL)]
         Redis[(Redis)]
         Kafka[(Kafka)]
-        SMTP[Email SMTP]
+        SMTP[📧 SMTP]
     end
-
+    
     R --> DB
     R --> Redis
     R --> Kafka
-    R --> SMTP
-
-    subgraph Workers
+    
+    subgraph Worker
         W[Email Worker]
     end
-
+    
     Kafka --> W
     W --> SMTP
 ```
 
-## Flow бронирования
+### Flow бронирования
 
 ```mermaid
 sequenceDiagram
-    User->>API: POST /bookings
-    API->>Auth: Validate JWT
-    Auth-->>API: User OK
-    API->>Redis: Acquire Lock
-    Redis-->>API: Lock OK
-    API->>DB: Check conflicts
-    DB-->>API: No conflicts
-    API->>DB: Create booking
-    API->>Kafka: Send event
-    API-->>User: 201 Created
-    Kafka->>Worker: booking_created
-    Worker->>SMTP: Send email
+    participant U as User
+    participant A as API
+    participant R as Redis
+    participant D as DB
+    participant K as Kafka
+    participant W as Worker
+    
+    U->>A: POST /bookings
+    A->>A: Validate JWT
+    A->>R: Acquire lock
+    R-->>A: Lock OK
+    A->>D: Check seat conflicts
+    D-->>A: No conflicts
+    A->>D: Save booking
+    A->>K: Send event
+    A-->>U: 201 Created
+    K->>W: booking_created
+    W->>W: Send email
 ```
 
-## Environment Variables
+### Component overview
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    booking_api                          │
+│  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌──────────┐    │
+│  │  Auth   │  │ Halls   │  │  Seats  │  │ Bookings │    │
+│  └────┬────┘  └────┬────┘  └────┬────┘  └─────┬────┘    │
+│       └───────────┴──────────┴──────────────┘          │
+│                         │                               │
+│              ┌──────────┴──────────┐                   │
+│              │   Service Layer     │                    │
+│              └──────────┬──────────┘                   │
+└─────────────────────────┼───────────────────────────────┘
+                          │
+        ┌─────────────────┼─────────────────┐
+        ▼                 ▼                 ▼
+   ┌─────────┐      ┌─────────┐      ┌──────────┐
+   │PostgreSQL│     │  Redis  │      │  Kafka   │
+   └─────────┘      └─────────┘      └────┬─────┘
+                                         │
+                                   ┌─────┴─────┐
+                                   │   Worker  │
+                                   └───────────┘
+```
+
+---
+
+## Тестирование
+
+Запускаем тесты:
 
 ```bash
-# Для локальной разработки (.env)
-DATABASE_URL=postgresql+asyncpg://user:pass@localhost:5432/booking_db
-REDIS_URL=redis://localhost:6379/0
-KAFKA_BOOTSTRAP_SERVERS=localhost:9092
-
-# Для Docker (.env в compose)
-# DATABASE_URL, REDIS_URL, KAFKA_BOOTSTRAP_SERVERS
-# задаются через environment: в docker-compose.yml
-# ВАЖНО: KAFKA_BOOTSTRAP_SERVERS=kafka:9092 (не localhost!)
+pytest tests/ -v
 ```
+
+Результат: **70 passed, 2 skipped**
+
+С покрытием:
+
+```bash
+pytest --cov=app --cov-report=html
+# Отчёт в htmlcov/index.html
+```
+
+Тесты разделены на:
+- Unit-тесты сервисов (`test_*_service.py`)
+- Интеграционные тесты API (`test_*.py`)
+
+---
+
+## API
+
+| Method | Endpoint | Access | Description |
+|--------|----------|--------|-------------|
+| POST | /api/v1/auth/signup | Public | Регистрация |
+| POST | /api/v1/auth/login | Public | Вход, получение токена |
+| GET | /api/v1/users/me | User | Профиль текущего юзера |
+| GET | /api/v1/halls/ | Public | Список активных залов |
+| POST | /api/v1/halls/ | Admin | Создать зал |
+| PATCH | /api/v1/halls/{id} | Admin | Обновить зал |
+| DELETE | /api/v1/halls/{id} | Admin | Удалить зал |
+| GET | /api/v1/halls/{id}/seats/ | Public | Места в зале |
+| POST | /api/v1/halls/{id}/seats/ | Admin | Создать место |
+| POST | /api/v1/halls/{id}/seats/bulk | Admin | Bulk создание мест |
+| DELETE | /api/v1/halls/{id}/seats/{seat_id} | Admin | Удалить место |
+| GET | /api/v1/bookings/ | User | Мои бронирования |
+| GET | /api/v1/bookings/{id} | User | Детали бронирования |
+| POST | /api/v1/bookings/ | User | Создать бронирование |
+| DELETE | /api/v1/bookings/{id} | User | Отменить бронирование |
+| GET | /api/v1/bookings/halls/{id}/availability | Public | Доступные слоты |
+
+Документация (Swagger): **http://localhost:8000/docs**
+
+---
+
+## Конфигурация
+
+### Переменные окружения
+
+| Переменная | По умолчанию | Описание |
+|------------|--------------|----------|
+| `DATABASE_URL` | `postgresql+asyncpg://user:pass@localhost:5432/booking_db` | Строка подключения к БД |
+| `REDIS_URL` | `redis://localhost:6379/0` | URL Redis |
+| `KAFKA_BOOTSTRAP_SERVERS` | `localhost:9092` | Kafka broker |
+| `JWT_SECRET_KEY` | `change-me-in-production` | Секрет для JWT |
+| `JWT_ALGORITHM` | `HS256` | Алгоритм токена |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | `30` | Время жизни токена |
+| `SMTP_HOST` | - | SMTP сервер |
+| `SMTP_PORT` | `587` | SMTP порт |
+| `SMTP_USER` | - | SMTP username |
+| `SMTP_PASSWORD` | - | SMTP password |
+
+Для Docker значения подставляются через `docker-compose.yml`.
+
+---
+
+## Лицензия
+
+MIT License — свободное использование для любых целей.
+
+Подробности в файле [LICENSE](LICENSE).
