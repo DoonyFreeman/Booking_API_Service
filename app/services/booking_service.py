@@ -2,6 +2,7 @@ import json
 from datetime import date, datetime
 from decimal import Decimal
 from typing import Any
+from uuid import uuid4
 
 import redis.asyncio as redis
 from sqlalchemy import func, select
@@ -24,6 +25,18 @@ from app.schemas import BookingResponse, BookingSeatResponse
 
 CACHE_TTL = 300
 CACHE_PREFIX = "slots:hall:"
+
+# Delete the lock only if it still holds our token: if it expired and another
+# request took it, a plain DELETE would release someone else's lock.
+LOCK_RELEASE_SCRIPT = (
+    "if redis.call('get', KEYS[1]) == ARGV[1] "
+    "then return redis.call('del', KEYS[1]) else return 0 end"
+)
+
+
+async def release_lock(redis_client: redis.Redis, key: str, token: str) -> bool:
+    released = await redis_client.eval(LOCK_RELEASE_SCRIPT, 1, key, token)
+    return bool(released)
 
 
 async def build_booking_response(
@@ -178,8 +191,9 @@ async def create_booking(
     hour = start_time.hour
     lock_key = f"lock:hall:{hall_id}:{date_str}:{hour}"
 
+    token = uuid4().hex
     if not await redis_client.set(
-        lock_key, "1", nx=True, ex=settings.REDIS_LOCK_TIMEOUT
+        lock_key, token, nx=True, ex=settings.REDIS_LOCK_TIMEOUT
     ):
         raise BookingConflictError("Another booking in progress for this time slot")
 
@@ -230,7 +244,7 @@ async def create_booking(
         return booking
 
     finally:
-        await redis_client.delete(lock_key)
+        await release_lock(redis_client, lock_key, token)
 
 
 async def cancel_booking(

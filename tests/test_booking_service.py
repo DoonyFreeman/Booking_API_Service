@@ -2,8 +2,10 @@ from datetime import datetime
 from decimal import Decimal
 
 import pytest
+import redis.asyncio as redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import settings
 from app.exceptions import (
     BookingConflictError,
     BookingNotFoundError,
@@ -271,3 +273,50 @@ class TestCancelBooking:
                 user_id=test_user.id,
             )
         assert "already cancelled" in str(exc.value.detail)
+
+
+class TestReleaseLock:
+    @pytest.mark.asyncio
+    async def test_foreign_token_does_not_release_lock(self, fake_redis) -> None:
+        key = "lock:hall:1:2026-04-10:14"
+        await fake_redis.set(key, "owner-token", nx=True)
+
+        released = await booking_service.release_lock(fake_redis, key, "other-token")
+
+        assert released is False
+        assert await fake_redis.get(key) == "owner-token"
+
+    @pytest.mark.asyncio
+    async def test_owner_token_releases_lock(self, fake_redis) -> None:
+        key = "lock:hall:1:2026-04-10:14"
+        await fake_redis.set(key, "owner-token", nx=True)
+
+        released = await booking_service.release_lock(fake_redis, key, "owner-token")
+
+        assert released is True
+        assert await fake_redis.get(key) is None
+
+    @pytest.mark.asyncio
+    async def test_lua_script_on_real_redis(self) -> None:
+        client = redis.from_url(
+            settings.REDIS_URL, decode_responses=True, socket_connect_timeout=1
+        )
+        key = "test:lock:release-owner"
+        try:
+            try:
+                await client.ping()
+            except redis.RedisError:
+                pytest.skip("Redis is not available")
+
+            await client.set(key, "owner-token", ex=10)
+            assert not await booking_service.release_lock(client, key, "other-token")
+            assert await client.get(key) == "owner-token"
+
+            assert await booking_service.release_lock(client, key, "owner-token")
+            assert await client.get(key) is None
+        finally:
+            try:
+                await client.delete(key)
+            except redis.RedisError:
+                pass
+            await client.aclose()
