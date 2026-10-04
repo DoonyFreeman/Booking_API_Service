@@ -24,7 +24,7 @@ jobs:
         run: ruff check .
 
       - name: Run ruff format check
-        run: ruff format --check . || true
+        run: ruff format --check .
 
   typecheck:
     runs-on: ubuntu-latest
@@ -42,10 +42,20 @@ jobs:
           pip install types-python-jose types-passlib
 
       - name: Run mypy
-        run: mypy app/ --ignore-missing-imports --no-error-1
+        run: mypy app/
 
   test-sqlite:
     runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 2s
+          --health-timeout 2s
+          --health-retries 10
+        ports:
+          - 6379:6379
     steps:
       - uses: actions/checkout@v4
 
@@ -74,30 +84,22 @@ jobs:
           POSTGRES_USER: test
           POSTGRES_PASSWORD: test
           POSTGRES_DB: test_db
+        options: >-
+          --health-cmd "pg_isready -U test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
         ports:
           - 5432:5432
       redis:
         image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 2s
+          --health-timeout 2s
+          --health-retries 10
         ports:
           - 6379:6379
-      kafka:
-        image: apache/kafka:3.7.0
-        env:
-          KAFKA_NODE_ID: 1
-          KAFKA_PROCESS_ROLES: broker,controller
-          KAFKA_LISTENERS: EXTERNAL://:9092,CONTROLLER://:9093
-          KAFKA_ADVERTISED_LISTENERS: EXTERNAL://kafka:9092
-          KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
-          KAFKA_INTER_BROKER_LISTENER_NAME: EXTERNAL
-          KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-          KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
-          KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-          KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-          KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-          KAFKA_LOG_DIRS: /var/lib/kafka/data
-          CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qm
-        ports:
-          - 9092:9092
     steps:
       - uses: actions/checkout@v4
 
@@ -112,14 +114,14 @@ jobs:
       - name: Set environment
         run: |
           echo "DATABASE_URL=postgresql+asyncpg://test:test@localhost:5432/test_db" >> $GITHUB_ENV
+          echo "TEST_DATABASE_URL=postgresql+asyncpg://test:test@localhost:5432/test_db" >> $GITHUB_ENV
           echo "REDIS_URL=redis://localhost:6379/0" >> $GITHUB_ENV
-          echo "KAFKA_BOOTSTRAP_SERVERS=localhost:9092" >> $GITHUB_ENV
 
       - name: Run pytest with PostgreSQL
-        run: pytest -v --tb=short -k "postgres"
+        run: pytest -v --tb=short
 
   docker-build:
-    needs: [lint, typecheck, test-sqlite]
+    needs: [lint, typecheck, test-sqlite, test-postgres]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -135,4 +137,4 @@ jobs:
           tags: booking-api:latest
 
       - name: Verify image
-        run: docker run --rm booking-api:latest python -c "from app.main import app; print('OK')"
+        run: docker run --rm --entrypoint python booking-api:latest -c "from app.main import app; print('OK')"

@@ -1,3 +1,4 @@
+import os
 from collections.abc import AsyncGenerator
 from decimal import Decimal
 from typing import Any
@@ -7,20 +8,27 @@ import pytest
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from sqlalchemy.pool import StaticPool
+from sqlalchemy.pool import NullPool, StaticPool
 
 from app.db import Base, get_db
 from app.models import Hall, Seat, User
 from app.models.enums import UserRole
 from app.redis import get_redis
 
-TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
+TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL", "sqlite+aiosqlite:///:memory:")
 
-test_engine = create_async_engine(
-    TEST_DATABASE_URL,
-    connect_args={"check_same_thread": False},
-    poolclass=StaticPool,
-)
+if TEST_DATABASE_URL.startswith("sqlite"):
+    # One shared connection, otherwise every connection gets its own empty DB.
+    test_engine = create_async_engine(
+        TEST_DATABASE_URL,
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+else:
+    # Every test drops all tables: refuse to run against a non-test database.
+    if "test" not in TEST_DATABASE_URL.rsplit("/", 1)[-1]:
+        raise RuntimeError("TEST_DATABASE_URL must point to a test database")
+    test_engine = create_async_engine(TEST_DATABASE_URL, poolclass=NullPool)
 
 TestingSessionLocal = async_sessionmaker(
     test_engine,
