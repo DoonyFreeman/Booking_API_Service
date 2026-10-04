@@ -67,6 +67,14 @@ class FakeRedis:
             return 1
         return 0
 
+    async def eval(self, script: str, numkeys: int, key: str, token: str) -> int:
+        from app.services.booking_service import LOCK_RELEASE_SCRIPT
+
+        assert script == LOCK_RELEASE_SCRIPT, "FakeRedis only emulates lock release"
+        if self.data.get(key) == token:
+            return await self.delete(key)
+        return 0
+
     async def close(self) -> None:
         pass
 
