@@ -224,12 +224,20 @@ class TestCancelBooking:
     async def test_cancel_booking_wrong_user(
         self, db_session: AsyncSession, test_hall_db, test_user
     ) -> None:
-        from app.models import Booking
-        from app.models.enums import BookingStatus
+        from app.models import Booking, User
+        from app.models.enums import BookingStatus, UserRole
 
-        other_user_id = test_user.id + 100
+        other_user = User(
+            email="other@test.com",
+            hashed_password="hashed_password",
+            role=UserRole.user,
+            is_active=True,
+        )
+        db_session.add(other_user)
+        await db_session.flush()
+
         booking = Booking(
-            user_id=other_user_id,
+            user_id=other_user.id,
             hall_id=test_hall_db.id,
             start_time=datetime(2026, 4, 10, 14, 0, 0),
             end_time=datetime(2026, 4, 10, 16, 0, 0),
